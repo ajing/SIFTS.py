@@ -12,10 +12,10 @@ class Residue:
     def getPDBresName(self):
         return self.resName
 
-    def getPDBresName(self):
+    def getPDBresNum(self):
         return self.resNum
 
-    def getPDBresName(self):
+    def getPDBresChain(self):
         return self.resChain
 
     def setUniProtInfo(self, accid, resnum, resname):
@@ -34,6 +34,9 @@ class Protein:
     def __init__(self, pdbid):
         self.resList = []
         self.pdbid = pdbid
+
+    def getProteinID(self):
+        return self.pdbid
 
     def appendNewResidue(self, residue):
         if not isinstance(residue, Residue):

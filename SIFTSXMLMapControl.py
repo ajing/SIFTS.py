@@ -30,9 +30,23 @@ def processOneXML(filename):
     return protein
 
 def processAllXML(filedir):
-    proteins = []
+    proteins = dict()
     for file in os.listdir(filedir):
-        proteins.append(processOneXML(file))
+        protein = processOneXML(file)
+        proteins[protein.getProteinID] = protein
+    return proteins
+
+def getCorrespondingUniProt(proteins, pdbid, chainid, resnum):
+    try:
+        protein = proteins[pdbid]
+    except:
+        raise Exception("Cannot find corresponding UniProt for:" + pdbid)
+    for res in protein:
+        if chainid == res.getPDBresChain() and resnum == res.getPDBresNum():
+            return res.getUniProtInfo(pdbid, chainid, resnum)
+
+    raise Exception("Cannot find corresponding UniProt for: %s, %s, %s" % (pdbid, chainid, resnum))
+
 
 if __name__ == "__main__":
     processOneXML("200l.xml")
