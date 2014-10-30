@@ -78,6 +78,9 @@ class Protein:
     def getResidues():
         return self.resList
 
+    def length(self):
+        return len(self.resList)
+
     def iterateResidue(self):
         return iter(self.resList)
 
