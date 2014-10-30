@@ -43,6 +43,9 @@ class Protein:
             raise TypeError("wrong type for residue")
         self.resList.append(residue)
 
+    def length(self):
+        return len(self.resList)
+
     def iterateResidue(self):
         return iter(self.resList)
 

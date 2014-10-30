@@ -5,6 +5,7 @@
 from xml.dom import minidom
 import ntpath
 from SIFTSXMLMapModel import Protein, Residue
+from common import length
 
 def processOneXML(filename):
     xmldoc    = minidom.parse(filename)
@@ -22,7 +23,7 @@ def processOneXML(filename):
             protein.appendNewResidue(residue)
             for cref in crossrefs:
                 if cref.getAttribute('dbSource') == "UniProt":
-                    uniprotid = cref.getAttribute('dbAccessionId')
+                    uniprotid  = cref.getAttribute('dbAccessionId')
                     uniprotnum = cref.getAttribute('dbResNum')
                     uniprotnam = cref.getAttribute('dbResName')
                     residue.setUniProtInfo(uniprotid, uniprotnum, uniprotnam)
@@ -31,9 +32,17 @@ def processOneXML(filename):
 
 def processAllXML(filedir):
     proteins = dict()
-    for file in os.listdir(filedir):
-        protein = processOneXML(file)
+    uniprot  = dict()
+    for afile in os.listdir(filedir):
+        protein = processOneXML(afile)
         proteins[protein.getProteinID] = protein
+        uniprotinfo = protein.getUniProtInfo()
+        accid       = uniprotinfo["accid"]
+        if accid in uniprot:
+            if protein.length() > uniprot[accid].length():
+                uniprot[accid] = protein
+        else:
+            uniprot[accid] = protein
     return proteins
 
 def getCorrespondingUniProt(proteins, pdbid, chainid, resnum):
