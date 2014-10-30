@@ -2,37 +2,53 @@
     Map PDBe residue to SIFTS residue
 '''
 
+PDBDIR = "pdbtest"
+XMLDIR = "xml"
+
 class UniProtInfo:
     def __init__(self, accid, resname, resnum):
-        self.accid = accid
-        self.resname = resname
-        self.resnum  = resnum
+        self._accid = accid
+        self._resname = resname
+        self._resnum  = int(resnum)
 
-    def getAccid():
-        return self.accid
+    @property
+    def accid(self):
+        return self._accid
 
-    def getResName():
-        return self.resname
+    @property
+    def resname(self):
+        return self._resname
 
-    def getResNum():
-        return self.resnum
+    @property
+    def resnum(self):
+        return self._resnum
 
-    def __cmp__(self, uniprot):
+    def __eq__(self, uniprot):
         if isinstance(uniprot, UniProtInfo):
-            if uniprot.getAccid() == self.accid:
+            if uniprot.accid == self.accid:
                 return True
             else:
                 return False
         else:
             return False
 
+    def __ne__(self, uniprot):
+        if isinstance(uniprot, UniProtInfo):
+            if uniprot.accid != self.accid:
+                return True
+            else:
+                return False
+        else:
+            return True
+
 
 class Residue:
     def __init__(self, resnum, resnam, reschain):
         # residue name and number from PDBe
         self.resName = resnam
-        self.resNum  = resnum
+        self.resNum  = int(resnum)
         self.resChain= reschain
+        self.uniprot = None
 
     def getPDBresName(self):
         return self.resName
@@ -43,18 +59,20 @@ class Residue:
     def getPDBresChain(self):
         return self.resChain
 
-    def setUniProtInfo(self, accid, resnum, resname):
-        self.uniprot = UniProtInfo(accid, resname, resnum)
+    def setUniProtInfo(self, uniprotinfo):
+        if not isinstance(uniprotinfo, UniProtInfo):
+            raise TypeError("wrong type for uniprot")
+        self.uniprot = uniprotinfo
 
     def getUniProtInfo(self):
-        try:
+        if not self.uniprot is None:
             self.uniprot
-        except:
+        else:
             raise Exception("cannot find uniprot")
 
     def getSeqDistance(self, res2):
-        if self.uniprot == res2.uniprot:
-            return self.uniprot.getResNum() - res2.uniprot.getResNum()
+        if self.uniprot == res2.uniprot :
+            return abs(self.uniprot.resnum - res2.uniprot.resnum)
         else:
             return False
 
@@ -65,6 +83,7 @@ class Residue:
 class Protein:
     def __init__(self, pdbid):
         self.resList = []
+        self.uniprots= []
         self.pdbid = pdbid
 
     def getProteinID(self):
@@ -75,8 +94,17 @@ class Protein:
             raise TypeError("wrong type for residue")
         self.resList.append(residue)
 
-    def getResidues():
+    def appendNewUniProt(self, uniprot):
+        if not isinstance(uniprot, UniProtInfo):
+            raise TypeError("wrong type for uniprot")
+        if not uniprot in self.uniprots:
+            self.uniprots.append(uniprot)
+
+    def getResidues(self):
         return self.resList
+
+    def getUniProts(self):
+        return self.uniprots
 
     def length(self):
         return len(self.resList)

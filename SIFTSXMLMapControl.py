@@ -4,11 +4,13 @@
 
 from xml.dom import minidom
 import ntpath
-from SIFTSXMLMapModel import Protein, Residue
+import os
+from SIFTSXMLMapModel import UniProtInfo, Protein, Residue
 from common import length
+import gzip
 
 def processOneXML(filename):
-    xmldoc    = minidom.parse(filename)
+    xmldoc    = minidom.parse(gzip.open(filename))
     entitylist= xmldoc.getElementsByTagName('entity')
     pdb       = ntpath.basename(filename)[:4]
     protein   = Protein(pdb)
@@ -26,24 +28,29 @@ def processOneXML(filename):
                     uniprotid  = cref.getAttribute('dbAccessionId')
                     uniprotnum = cref.getAttribute('dbResNum')
                     uniprotnam = cref.getAttribute('dbResName')
-                    residue.setUniProtInfo(uniprotid, uniprotnum, uniprotnam)
+                    uniprotinfo = UniProtInfo(uniprotid, uniprotnam, uniprotnum)
+                    residue.setUniProtInfo(uniprotinfo)
+                    protein.appendNewUniProt(uniprotinfo)
                     break
     return protein
 
 def processAllXML(filedir):
     proteins = dict()
     uniprot  = dict()
-    for afile in os.listdir(filedir):
-        protein = processOneXML(afile)
-        proteins[protein.getProteinID] = protein
-        uniprotinfo = protein.getUniProtInfo()
-        accid       = uniprotinfo["accid"]
-        if accid in uniprot:
-            if protein.length() > uniprot[accid].length():
-                uniprot[accid] = protein
-        else:
-            uniprot[accid] = protein
-    return proteins
+    for root, dirs, files in os.walk(filedir):
+        for afile in files:
+            afile = os.path.join(root, afile)
+            protein = processOneXML(afile)
+            proteins[protein.getProteinID()] = protein
+            uniprotinfos = protein.getUniProts()
+            for uniprotinfo in uniprotinfos:
+                accid       = uniprotinfo.accid
+                if accid in uniprot:
+                    if protein.length() > uniprot[accid].length():
+                        uniprot[accid] = protein
+                else:
+                    uniprot[accid] = protein
+    return (proteins, uniprot)
 
 def getCorrespondingUniProt(proteins, pdbid, chainid, resnum):
     try:
