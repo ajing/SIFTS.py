@@ -49,14 +49,13 @@ def GetSeqSpaAll(uniprotdict):
 def SavePairList(pairlist):
     fileobj = open("pair.txt", "w")
     for each in pairlist:
-        print each
         spatialdist, residuedist = each
         line = "%s\t%s\n" % (spatialdist, residuedist)
         fileobj.write(line)
     fileobj.close()
 
 if __name__ == "__main__":
-    filedir  = "xml"
+    filedir  = XMLDIR
     proteins, uniprotdict = processAllXML(filedir)
     pairlist = GetSeqSpaAll(uniprotdict)
     SavePairList(pairlist)

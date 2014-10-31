@@ -2,7 +2,9 @@
     Map PDBe residue to SIFTS residue
 '''
 
-PDBDIR = "pdbtest"
+#PDBDIR = "pdbtest"
+#XMLDIR = "xmltest"
+PDBDIR = "pdb"
 XMLDIR = "xml"
 
 class UniProtInfo:

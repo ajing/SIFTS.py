@@ -38,7 +38,10 @@ def GetResidueObj(pdbid, chainid, resname, resnum):
     if pdbid in pdbdict:
         struct = pdbdict[pdbid]
     else:
-        struct = GetStructure(pdbid)
+        struct  = GetStructure(pdbid)
+        for eachkey in pdbdict:
+            if eachkey != pdbid:
+                del pdbdict[eachkey]
         pdbdict[pdbid] = struct
     return GetResidueFromPDB(struct, chainid, resname, resnum)
 
