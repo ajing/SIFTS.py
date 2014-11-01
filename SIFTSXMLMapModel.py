@@ -7,11 +7,17 @@
 PDBDIR = "pdb"
 XMLDIR = "xml"
 
+PAIRFILE = "pair.txt"
+SAMPLESIZE = 10
+
 class UniProtInfo:
     def __init__(self, accid, resname, resnum):
         self._accid = accid
         self._resname = resname
-        self._resnum  = int(resnum)
+        try:
+            self._resnum  = int(resnum)
+        except:
+            raise Exception("Cannot parse resnum")
 
     @property
     def accid(self):
@@ -73,7 +79,7 @@ class Residue:
             raise Exception("cannot find uniprot")
 
     def getSeqDistance(self, res2):
-        if self.uniprot == res2.uniprot :
+        if self.uniprot == res2.uniprot and not self.uniprot is None:
             return abs(self.uniprot.resnum - res2.uniprot.resnum)
         else:
             return False

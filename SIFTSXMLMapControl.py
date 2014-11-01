@@ -5,9 +5,11 @@
 from xml.dom import minidom
 import ntpath
 import os
-from SIFTSXMLMapModel import UniProtInfo, Protein, Residue
+from SIFTSXMLMapModel import SAMPLESIZE, UniProtInfo, Protein, Residue
 from common import length
 import gzip
+import random
+
 
 def processOneXML(filename):
     xmldoc    = minidom.parse(gzip.open(filename))
@@ -18,18 +20,25 @@ def processOneXML(filename):
         residuelist = entity.getElementsByTagName('residue')
         chainid     = entity.getAttribute('entityId')
         for residue in residuelist:
-            resnum    = residue.getAttribute('dbResNum')
-            resname   = residue.getAttribute('dbResName')
             crossrefs = residue.getElementsByTagName('crossRefDb')
-            residue   = Residue(resnum, resname, chainid)
-            protein.appendNewResidue(residue)
+            residueishere = False
             for cref in crossrefs:
-                if cref.getAttribute('dbSource') == "UniProt":
+                if cref.getAttribute('dbSource') == "PDB":
+                    resnum    = cref.getAttribute('dbResNum')
+                    resname   = cref.getAttribute('dbResName')
+                    dbchainid = cref.getAttribute('dbChainId')
+                    pdbresidue   = Residue(resnum, resname, dbchainid)
+                    residueishere = True
+                    protein.appendNewResidue(pdbresidue)
+                if cref.getAttribute('dbSource') == "UniProt" and residueishere:
                     uniprotid  = cref.getAttribute('dbAccessionId')
                     uniprotnum = cref.getAttribute('dbResNum')
                     uniprotnam = cref.getAttribute('dbResName')
-                    uniprotinfo = UniProtInfo(uniprotid, uniprotnam, uniprotnum)
-                    residue.setUniProtInfo(uniprotinfo)
+                    try:
+                        uniprotinfo = UniProtInfo(uniprotid, uniprotnam, uniprotnum)
+                    except:
+                        raise Exception(" ".join([uniprotid, uniprotnum, uniprotnam]))
+                    pdbresidue.setUniProtInfo(uniprotinfo)
                     protein.appendNewUniProt(uniprotinfo)
                     break
     return protein
@@ -37,19 +46,24 @@ def processOneXML(filename):
 def processAllXML(filedir):
     proteins = dict()
     uniprot  = dict()
+    allfiles = []
     for root, dirs, files in os.walk(filedir):
         for afile in files:
             afile = os.path.join(root, afile)
-            protein = processOneXML(afile)
-            proteins[protein.getProteinID()] = protein
-            uniprotinfos = protein.getUniProts()
-            for uniprotinfo in uniprotinfos:
-                accid       = uniprotinfo.accid
-                if accid in uniprot:
-                    if protein.length() > uniprot[accid].length():
-                        uniprot[accid] = protein
-                else:
+            allfiles.append(afile)
+    selected = random.sample(allfiles, SAMPLESIZE)
+    for afile in selected:
+        print afile
+        protein = processOneXML(afile)
+        proteins[protein.getProteinID()] = protein
+        uniprotinfos = protein.getUniProts()
+        for uniprotinfo in uniprotinfos:
+            accid       = uniprotinfo.accid
+            if accid in uniprot:
+                if protein.length() > uniprot[accid].length():
                     uniprot[accid] = protein
+            else:
+                uniprot[accid] = protein
     return (proteins, uniprot)
 
 def getCorrespondingUniProt(proteins, pdbid, chainid, resnum):

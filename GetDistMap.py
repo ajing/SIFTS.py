@@ -4,10 +4,16 @@
 
 from SIFTSXMLMapControl import processAllXML
 from PDBtools import GetResidueObj
-from SIFTSXMLMapModel import XMLDIR
+from SIFTSXMLMapModel import XMLDIR, PAIRFILE
+import os
 
 def GetSpatialDistance(res1, res2):
-    return res1['CA'] - res2['CA']
+    try:
+        return res1['CA'] - res2['CA']
+    except:
+        print res1
+        print res2
+        raise Exception("cannot find CA")
 
 def GetSeqSpaPair(protein):
     reslist  = protein.getResidues()
@@ -22,7 +28,7 @@ def GetSeqSpaPair(protein):
         try:
             res1stru= GetResidueObj(pdb, chainid, resnam, resnum)
         except Exception as e:
-            #print e
+            print e
             continue
         for j in range(i + 1, reslen):
             res2    = reslist[j]
@@ -40,14 +46,16 @@ def GetSeqSpaPair(protein):
     return pairlist
 
 def GetSeqSpaAll(uniprotdict):
-    pairlistall = []
+    try:
+        os.remove(PAIRFILE)
+    except:
+        pass
     for protein in uniprotdict.values():
-        pairlistall += GetSeqSpaPair(protein)
-    return pairlistall
-
+        pairlist = GetSeqSpaPair(protein)
+        SavePairList(pairlist)
 
 def SavePairList(pairlist):
-    fileobj = open("pair.txt", "w")
+    fileobj = open(PAIRFILE, "a")
     for each in pairlist:
         spatialdist, residuedist = each
         line = "%s\t%s\n" % (spatialdist, residuedist)
@@ -57,5 +65,4 @@ def SavePairList(pairlist):
 if __name__ == "__main__":
     filedir  = XMLDIR
     proteins, uniprotdict = processAllXML(filedir)
-    pairlist = GetSeqSpaAll(uniprotdict)
-    SavePairList(pairlist)
+    GetSeqSpaAll(uniprotdict)

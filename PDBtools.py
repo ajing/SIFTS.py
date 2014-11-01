@@ -9,7 +9,8 @@ import gzip
 
 def GetFilewithPDB(pdbid):
     pdbfname = "pdb" + pdbid + ".ent.gz"
-    return os.path.join(PDBDIR, pdbfname)
+    subdir   = pdbid[1:3]
+    return os.path.join(PDBDIR, subdir, pdbfname)
 
 def PrintPDBstruct(pdbstruct):
     for model in pdbstruct:
