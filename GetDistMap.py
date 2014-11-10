@@ -40,9 +40,13 @@ def GetSeqSpaPair(protein):
             except Exception as e:
                 #print e
                 continue
-            dist = res1.getSeqDistance(res2)
-            if dist:
-                pairlist.append((GetSpatialDistance(res1stru, res2stru), dist))
+            dist_seq = res1.getSeqDistance(res2)
+            try:
+                dist_spa = GetSpatialDistance(res1stru, res2stru)
+            except:
+                continue
+            if dist_seq and dist_spa:
+                pairlist.append((dist_spa, dist_seq))
     return pairlist
 
 def GetSeqSpaAll(uniprotdict):

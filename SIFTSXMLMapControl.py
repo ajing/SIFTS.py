@@ -30,7 +30,7 @@ def processOneXML(filename):
                     try:
                         pdbresidue   = Residue(resnum, resname, dbchainid)
                     except:
-                        pass
+                        continue
                     residueishere = True
                     protein.appendNewResidue(pdbresidue)
                 if cref.getAttribute('dbSource') == "UniProt" and residueishere:
