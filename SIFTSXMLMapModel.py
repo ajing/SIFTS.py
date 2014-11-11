@@ -8,7 +8,7 @@ PDBDIR = "pdb"
 XMLDIR = "xml"
 
 PAIRFILE = "pair.txt"
-SAMPLESIZE = 5000
+SAMPLESIZE = 3000
 
 class UniProtInfo:
     def __init__(self, accid, resname, resnum):
