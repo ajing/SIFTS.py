@@ -2,10 +2,15 @@
     Tools to retrievel info from PDB
 '''
 
-from SIFTSXMLMapModel import PDBDIR
+import sys
+from SIFTS.SIFTSXMLMapModel import PDBDIR
 import os
 from Bio.PDB import PDBParser
 import gzip
+from SCOPData import protein_letters_3to1
+
+#DISABLE_RM_IN_DICT = True
+DISABLE_RM_IN_DICT = False
 
 def GetFilewithPDB(pdbid):
     pdbfname = "pdb" + pdbid + ".ent.gz"
@@ -18,7 +23,20 @@ def PrintPDBstruct(pdbstruct):
             for residue in chain:
                 print residue
 
-def GetResidueFromPDB(pdbstruct, chainid, resname, resnum):
+def GetResidueFromPDB(pdbstruct, chainid = None, resname = None, resnum = None):
+    if chainid is None and resname is None and resnum is None:
+        reslist = []
+        for res in pdbstruct[0].get_residues():
+            if res.get_resname() in protein_letters_3to1:
+                reslist.append(res)
+        return reslist
+    elif resname is None and resnum is None:
+        reslist = []
+        for res in pdbstruct[0][chainid]:
+            if res.get_resname() in protein_letters_3to1:
+                reslist.append(res)
+        return reslist
+
     for model in pdbstruct:
         try:
             residue = model[chainid][int(resnum)]
@@ -35,14 +53,23 @@ def GetStructure(pdbid):
     return structure
 
 pdbdict = dict()
-def GetResidueObj(pdbid, chainid, resname, resnum):
+def GetResidueObj(pdbid, chainid = None, resname = None, resnum = None):
     if pdbid in pdbdict:
         struct = pdbdict[pdbid]
     else:
         struct  = GetStructure(pdbid)
-        for eachkey in pdbdict:
-            if eachkey != pdbid:
-                del pdbdict[eachkey]
+        if not DISABLE_RM_IN_DICT:
+            for eachkey in pdbdict.keys():
+                if eachkey != pdbid:
+                    del pdbdict[eachkey]
         pdbdict[pdbid] = struct
+    if chainid is None and resname is None and resnum is None:
+        return GetResidueFromPDB(struct)
+    elif resname is None and resnum is None:
+        return GetResidueFromPDB(struct, chainid)
     return GetResidueFromPDB(struct, chainid, resname, resnum)
 
+if __name__ == "__main__":
+    reslist = GetResidueObj("2ml1")
+    for res in reslist:
+        print res

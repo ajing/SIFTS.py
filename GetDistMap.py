@@ -2,9 +2,9 @@
     Get the relation of sequence distance and spatial distance
 '''
 
-from SIFTSXMLMapControl import processAllXML
+from SIFTS.SIFTSXMLMapControl import processAllXML
 from PDBtools import GetResidueObj
-from SIFTSXMLMapModel import XMLDIR, PAIRFILE
+from SIFTS.SIFTSXMLMapModel import XMLDIR, PAIRFILE
 import os
 
 def GetSpatialDistance(res1, res2):
