@@ -3,7 +3,6 @@
 '''
 
 import sys
-from SIFTS.SIFTSXMLMapModel import PDBDIR
 import os
 from Bio.PDB import PDBParser
 import gzip
@@ -11,8 +10,19 @@ from SCOPData import protein_letters_3to1
 
 #DISABLE_RM_IN_DICT = True
 DISABLE_RM_IN_DICT = False
+#BIOLIP_DIR = True
+BIOLIP_DIR = False
+
+if BIOLIP_DIR:
+    from AABindingSiteDist.Model import PDBDIR
+else:
+    from SIFTS.SIFTSXMLMapModel import PDBDIR
 
 def GetFilewithPDB(pdbid):
+    if BIOLIP_DIR:
+        pdbfname = pdbid + ".pdb.gz"
+        return os.path.join(PDBDIR, pdbfname)
+
     pdbfname = "pdb" + pdbid + ".ent.gz"
     subdir   = pdbid[1:3]
     return os.path.join(PDBDIR, subdir, pdbfname)
@@ -40,8 +50,10 @@ def GetResidueFromPDB(pdbstruct, chainid = None, resname = None, resnum = None):
     for model in pdbstruct:
         try:
             residue = model[chainid][int(resnum)]
-            if residue.get_resname() == resname:
-                return residue
+            ### for simplicity
+            return residue
+            #if residue.get_resname() == resname:
+            #    return residue
         except:
             continue
     raise Exception("Cannot find chain: %s, resname: %s, resnum: %s to PDB:%s" % ( chainid, resname, resnum, pdbstruct))

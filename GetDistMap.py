@@ -38,7 +38,7 @@ def GetSeqSpaPair(protein):
             try:
                 res2stru= GetResidueObj(pdb, chainid, resnam, resnum)
             except Exception as e:
-                #print e
+                print e
                 continue
             dist_seq = res1.getSeqDistance(res2)
             try:

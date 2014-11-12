@@ -1,6 +1,9 @@
 
 from SIFTS.SIFTSXMLMapModel import Residue
 from GetDistMap import GetSpatialDistance
+from PDBtools import GetResidueObj
+
+PDBDIR = "./Data/receptorConCat"
 
 class BindingSite:
     def __init__(self, pdbid, chainid, bscode, ligchainid, ligname):
@@ -25,12 +28,27 @@ class BindingSite:
         return self._bscode
 
     def appendResidue(self, res):
+        if not isinstance(res, Residue):
+            raise Exception("this is not a residue object in SIFT model")
         self.residuelist.append(res)
+        resname = res.getPDBresName()
+        resnum = res.getPDBresNum()
 
     def getminDist(self, res):
         mindist = float("inf")
         for each in self.residuelist:
-            dist = GetSpatialDistance(each, res)
+            resname = each.getPDBresName()
+            resnum  = each.getPDBresNum()
+            try:
+                res_obj = GetResidueObj(self._pdbid, self._chainid, resname, resnum)
+            except Exception as e:
+                print e
+                continue
+            try:
+                dist = GetSpatialDistance(res_obj, res)
+            except Exception as e:
+                print e
+                continue
             if dist < mindist:
                 mindist = dist
         return mindist
