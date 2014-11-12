@@ -2,9 +2,9 @@
     Get the relation of sequence distance and spatial distance
 '''
 
-from SIFTSXMLMapControl import processAllXML
+from SIFTS.SIFTSXMLMapControl import processAllXML
 from PDBtools import GetResidueObj
-from SIFTSXMLMapModel import XMLDIR, PAIRFILE
+from SIFTS.SIFTSXMLMapModel import XMLDIR, PAIRFILE
 import os
 
 def GetSpatialDistance(res1, res2):
@@ -38,11 +38,15 @@ def GetSeqSpaPair(protein):
             try:
                 res2stru= GetResidueObj(pdb, chainid, resnam, resnum)
             except Exception as e:
-                #print e
+                print e
                 continue
-            dist = res1.getSeqDistance(res2)
-            if dist:
-                pairlist.append((GetSpatialDistance(res1stru, res2stru), dist))
+            dist_seq = res1.getSeqDistance(res2)
+            try:
+                dist_spa = GetSpatialDistance(res1stru, res2stru)
+            except:
+                continue
+            if dist_seq and dist_spa:
+                pairlist.append((dist_spa, dist_seq))
     return pairlist
 
 def GetSeqSpaAll(uniprotdict):
