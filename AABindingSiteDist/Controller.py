@@ -3,13 +3,13 @@
     python -m AABindingSiteDist.Controller
 '''
 
-from PDBtools import GetResidueObj
+from PDBtools import GetResidueObj, GetFilewithPDB
 from Model import BindingSite
 from SIFTS.SIFTSXMLMapModel import Residue
 from Bio.PDB.Polypeptide import one_to_three
+import os
 
 BSLineOrder = ["PDBID", "ChainID", "BSID", "LigName", "LigChain", "BSRes"]
-SNPLineOrder = ["PDBID", "ChainID", "SNPID", "ResNum", "ResName"]
 
 def GetAllDist(bslist):
     file_obj = open("distaa.txt", "w")
@@ -28,6 +28,13 @@ def GetAllDist(bslist):
             line    = "\t".join(map(str, info))
             file_obj.write(line + "\n")
     file_obj.close()
+
+def PDBFileExist(pdbid):
+    filedir = GetFilewithPDB(pdbid)
+    if os.path.isfile(filedir):
+        return True
+    else:
+        return False
 
 def BSParser(infile):
     bslist = []
@@ -54,29 +61,10 @@ def BSParser(infile):
                 print e
                 continue
         bslist.append(newbs)
+
+        if not PDBFileExist(pdbid):
+            print "Cannot find file " + pdbid
     return bslist
-
-def SNPResParser(infile):
-    snpres = dict()
-    for line in open(infile):
-        pdbid   = content[BSLineOrder.index("PDBID")].lower()
-        chainid = content[BSLineOrder.index("ChainID")]
-        snpid   = content[BSLineOrder.index("SNPID")]
-        resnum  = content[BSLineOrder.index("ResNum")]
-        resnam  = content[BSLineOrder.index("ResName")]
-        snpres[(pdbid, chainid)] = (snpid, resnum, resnam)
-    return snpres
-
-'''
-class FilterSNP:
-    def __init__(self, snpres):
-        self.snpdict = snpres
-
-    def isSNP(self, pdbid, chainid, resnum):
-        if not (pdbid, chainid) in
-        snpid, resnum, resnam = snpres[(pdbid)]
-'''
-
 
 if __name__ == "__main__":
     bslist = BSParser("./Data/bindingsite.txt")
