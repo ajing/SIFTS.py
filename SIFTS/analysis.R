@@ -35,4 +35,10 @@ plot(disthist, main = gtitle, ylab = ylabel, xlab = xlabel)
 dev.off()
 }
 
-histpercent("bsdist_hist.jpg", distance[,1], "Distance to Binding Site", "Probability", "Distance in Angstrom")
+histpercent("bsdist_hist.jpg", distance[distance[,1]<250,1], "Distance to Binding Site", "Distance in Angstrom", "Probability")
+
+
+disease_snp <- read.table("../disease_snp_dist.txt", header=F)
+disease_snp <- data.matrix(disease_snp)
+histpercent("disease_dist.jpg", disease_snp, "Distance from Disease SNP to BindingSite", "Probability", "Distance in Angstrom")
+histpercent("disease_dist_less10.jpg", disease_snp[disease_snp < 10], "Distance from Disease SNP to BindingSite", "Probability", "Distance in Angstrom")
