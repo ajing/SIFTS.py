@@ -17,7 +17,13 @@ def GetAllDist(bslist):
         pdbid    = eachbs.pdbid
         chainid  = eachbs.chainid
         bscode   = eachbs.bscode
-        reslist  = GetResidueObj(pdbid)
+        try:
+            reslist  = GetResidueObj(pdbid)
+        except Exception as e:
+            print e
+            print "cannot find reslist for " + pdbid
+            continue
+
         print pdbid, chainid, bscode
         for residue in reslist:
             resname = residue.get_resname()

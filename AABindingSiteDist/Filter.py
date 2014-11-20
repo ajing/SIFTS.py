@@ -48,4 +48,4 @@ def filterFile(infile, filtersnp):
 if __name__ == "__main__":
     snpdict   = SNPResParser("../Data/snp_logic_snp.txt")
     filterobj = FilterSNP(snpdict)
-    filterFile("../distaa_cp.txt", filterobj)
+    filterFile("../distaa.txt", filterobj)
