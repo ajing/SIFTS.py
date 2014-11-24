@@ -81,6 +81,15 @@ def GetResidueObj(pdbid, chainid = None, resname = None, resnum = None):
         return GetResidueFromPDB(struct, chainid)
     return GetResidueFromPDB(struct, chainid, resname, resnum)
 
+
+# copy and gunzip file
+def CopyAndGunzip(infiledir, outfiledir):
+    inF = gzip.open(infiledir, 'rb')
+    outF = open(outfiledir, 'wb')
+    outF.write( inF.read() )
+    inF.close()
+    outF.close()
+
 if __name__ == "__main__":
     reslist = GetResidueObj("2ml1")
     for res in reslist:

@@ -4,6 +4,8 @@ from GetDistMap import GetSpatialDistance
 from PDBtools import GetResidueObj
 
 PDBDIR = "./Data/receptorConCat"
+BSDIR  = "./Data/bindingsite2.txt"
+OUTDIR = "distaa_biolip.txt"
 
 class BindingSite:
     def __init__(self, pdbid, chainid, bscode, ligchainid, ligname):
