@@ -63,12 +63,40 @@ histpercent("disease_dist.jpg", disease_snp, "Distance from Disease SNP to Bindi
 histpercent("disease_dist_less10.jpg", disease_snp[disease_snp < 10], "Distance from Disease SNP to BindingSite", "Probability", "Distance in Angstrom")
 
 library(ggplot2)
+filename = "../distaa.txt"
+distdata = read.table(filename)
+all_dist = data.frame(distance = as.numeric(distdata[,"V7"]))
+
 disease_snp <- read.table("../disease_snp_dist.txt", header=F)
 disease_snp <- as.numeric(unlist(disease_snp))
 
+polymore_snp <- read.table("/tmp/polymorephism_snp_dist.txt", header=F)
+polymore_snp <- as.numeric(unlist(polymore_snp))
+
+filename = "../distaa.txt_filtered"
+distdata = read.table(filename)
 snp_dist = data.frame(distance = as.numeric(distdata[,"V7"]))
 disease_dist = data.frame(distance = disease_snp)
 snp_dist$type = "all_snp"
 disease_dist$type = "disease_snp"
-ggplot(rbind(snp_dist,disease_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
 
+
+all_dist$type = "all_pair"
+jpeg("all_hist.jpg")
+ggplot(rbind(all_dist, snp_dist,disease_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
+dev.off()
+
+
+polymore_dist = data.frame(distance = polymore_snp)
+polymore_dist$type = "polymorephism_snp"
+jpeg("polymore_hist.jpg")
+ggplot(rbind(snp_dist,polymore_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
+dev.off()
+
+unclass_snp <- read.table("/tmp/unclassified_snp_dist.txt", header=F)
+unclass_snp <- as.numeric(unlist(unclass_snp))
+unclass_dist = data.frame(distance = unclass_snp)
+unclass_dist$type = "unclassified_snp"
+jpeg("unclass_hist.jpg")
+ggplot(rbind(snp_dist,unclass_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
+dev.off()

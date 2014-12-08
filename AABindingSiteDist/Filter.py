@@ -38,14 +38,14 @@ def filterFile(infile, filtersnp):
         reschain= content[DISTOrder.index("ResChain")]
         resnum  = content[DISTOrder.index("ResNum")]
         snpid   =  filtersnp.isSNP(pdbid, reschain, resnum)
-        if snpid:
+        distance= content[DISTOrder.index("Distance")]
+        if snpid and not distance == "inf":
             newline = line.strip() + "\t" + snpid + "\n"
             outobj.write(newline)
     outobj.close
 
-
-
 if __name__ == "__main__":
     snpdict   = SNPResParser("../Data/snp_logic_snp.txt")
     filterobj = FilterSNP(snpdict)
-    filterFile("../distaa.txt", filterobj)
+    #filterFile("../distaa.txt", filterobj)
+    filterFile("../distaa_biolip.txt", filterobj)

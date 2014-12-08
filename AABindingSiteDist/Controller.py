@@ -4,7 +4,7 @@
 '''
 
 from PDBtools import GetResidueObj, GetFilewithPDB
-from Model import BindingSite
+from Model import BindingSite, BSDIR, OUTDIR
 from SIFTS.SIFTSXMLMapModel import Residue
 from Bio.PDB.Polypeptide import one_to_three
 import os
@@ -12,7 +12,7 @@ import os
 BSLineOrder = ["PDBID", "ChainID", "BSID", "LigName", "LigChain", "BSRes"]
 
 def GetAllDist(bslist):
-    file_obj = open("distaa.txt", "w")
+    file_obj = open(OUTDIR, "w")
     for eachbs in bslist:
         pdbid    = eachbs.pdbid
         chainid  = eachbs.chainid
@@ -54,7 +54,11 @@ def BSParser(infile):
         bsres   = content[BSLineOrder.index("BSRes")]
         newbs   = BindingSite(pdbid, chainid, bscode, ligchain, ligname)
         for eachres in bsres.split():
-            resname = one_to_three(eachres[0])
+            try:
+                resname = one_to_three(eachres[0])
+            except:
+                print "wrong bindingsite res: " + eachres
+                continue
             try:
                 resnum = int(eachres[1:])
             except:
@@ -73,5 +77,5 @@ def BSParser(infile):
     return bslist
 
 if __name__ == "__main__":
-    bslist = BSParser("./Data/bindingsite.txt")
+    bslist = BSParser(BSDIR)
     GetAllDist(bslist)
