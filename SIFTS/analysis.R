@@ -71,3 +71,4 @@ disease_dist = data.frame(distance = disease_snp)
 snp_dist$type = "all_snp"
 disease_dist$type = "disease_snp"
 ggplot(rbind(snp_dist,disease_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
+
