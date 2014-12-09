@@ -98,3 +98,26 @@ unclass_dist$type = "unclassified_snp"
 jpeg("unclass_hist.jpg")
 ggplot(rbind(snp_dist,unclass_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
 dev.off()
+
+
+
+# a figure for biolip for all SNP, disease SNP and polymorephism SNP
+library(ggplot2)
+filename = "../distaa_biolip.txt_filtered"
+distdata = read.table(filename)
+snp_dist = data.frame(distance = as.numeric(distdata[,"V7"]))
+snp_dist$type = "all_snp"
+
+disease_snp <- read.table("/tmp/disease_snp_dist_2.txt", header=F)
+disease_snp <- as.numeric(unlist(disease_snp))
+disease_dist = data.frame(distance = disease_snp)
+disease_dist$type = "disease_snp"
+
+polymore_snp <- read.table("/tmp/polymorephism_snp_dist_2.txt", header=F)
+polymore_snp <- as.numeric(unlist(polymore_snp))
+polymore_dist = data.frame(distance = polymore_snp)
+polymore_dist$type = "polymorephism_snp"
+
+jpeg("biolip_hist.jpg")
+ggplot(rbind(snp_dist, disease_dist, polymore_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2) + xlim(0,50)
+dev.off()

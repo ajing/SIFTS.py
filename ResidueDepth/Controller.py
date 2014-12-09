@@ -38,7 +38,10 @@ def GetResidueDepPDB(pdb, pdbfile):
         resid   = residue.get_id()
         resname = residue.get_resname()
         chainid = residue.get_parent().get_id()
-        rd = residue_depth(residue, surface)
+        try:
+            rd = residue_depth(residue, surface)
+        except:
+            continue
         ca_rd = ca_depth(residue, surface)
         info    = [pdb, chainid, resid[1], resname, str(rd), str(ca_rd)]
         #print info
