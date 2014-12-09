@@ -79,6 +79,8 @@ snp_dist = data.frame(distance = as.numeric(distdata[,"V7"]))
 disease_dist = data.frame(distance = disease_snp)
 snp_dist$type = "all_snp"
 disease_dist$type = "disease_snp"
+
+
 all_dist$type = "all_pair"
 jpeg("all_hist.jpg")
 ggplot(rbind(all_dist, snp_dist,disease_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
