@@ -101,7 +101,6 @@ jpeg("unclass_hist.jpg")
 ggplot(rbind(snp_dist,unclass_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2)
 dev.off()
 
-
 # The first column is family size (here is the number of pairs.. so very big number) second is max sequence length third column is standard deviation of distance
 dist_var <- read.table("../Data/dist_variance.txt", sep="\t", quote= "", header=F)
 plot(dist_var[,1], dist_var[,3], xlab = "family size", ylab = "standard deviation of distance", col = dist_var[,2])
@@ -114,4 +113,25 @@ png("dist_sd_family_relation.png")
 scatter2D(dist_var[,1], dist_var[,3], colvar=dist_var[,2], log = "x", xlab = "The number of distances for a family (to binding sites)", ylab = "standard deviation of distances", clab = "Sequence Length")
 index = dist_var[,3] > 60 & dist_var[,1] / dist_var[,2] ** 2 > 0.1
 text(dist_var[index,1], dist_var[index,3], dist_var[index,4], cex=0.7, pos=1, col="black")
+=======
+
+# a figure for biolip for all SNP, disease SNP and polymorephism SNP
+library(ggplot2)
+filename = "../distaa_biolip.txt_filtered"
+distdata = read.table(filename)
+snp_dist = data.frame(distance = as.numeric(distdata[,"V7"]))
+snp_dist$type = "all_snp"
+
+disease_snp <- read.table("/tmp/disease_snp_dist_2.txt", header=F)
+disease_snp <- as.numeric(unlist(disease_snp))
+disease_dist = data.frame(distance = disease_snp)
+disease_dist$type = "disease_snp"
+
+polymore_snp <- read.table("/tmp/polymorephism_snp_dist_2.txt", header=F)
+polymore_snp <- as.numeric(unlist(polymore_snp))
+polymore_dist = data.frame(distance = polymore_snp)
+polymore_dist$type = "polymorephism_snp"
+
+jpeg("biolip_hist.jpg")
+ggplot(rbind(snp_dist, disease_dist, polymore_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2) + xlim(0,50)
 dev.off()
