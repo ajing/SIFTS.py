@@ -123,3 +123,9 @@ polymore_dist$type = "polymorephism_snp"
 jpeg("biolip_hist.jpg")
 ggplot(rbind(snp_dist, disease_dist, polymore_dist), aes(distance , fill = type)) + geom_density(alpha = 0.2) + xlim(0,50)
 dev.off()
+
+
+# distance variance summary
+filename = "/tmp/dist_summary_2.txt"
+distdata = read.table(filename, sep="\t", header=F)
+
