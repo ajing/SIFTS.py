@@ -2,7 +2,7 @@
     Get the relation of sequence distance and spatial distance
 '''
 
-from SIFTS.SIFTSXMLMapControl import processAllXML
+from SIFTS.SIFTSXMLMapControl import processAllXML, processOneXML, getCorrespondingUniProt
 from PDBtools import GetResidueObj
 from SIFTS.SIFTSXMLMapModel import XMLDIR, PAIRFILE
 import os
@@ -14,6 +14,31 @@ def GetSpatialDistance(res1, res2):
         print res1
         print res2
         raise Exception("cannot find CA")
+
+class GetSeqSpa:
+    def __init__(self):
+        self.protein2uniprot = [None, None]
+        self.xmldir = XMLDIR
+
+    def GetSeqSpafor2Residue(self, pdbid, chainidA, chainidB, resnamA, resnamB, resnumA, resnumB):
+        resAstru= GetResidueObj(pdbid, chainidA, resnamA, resnumA)
+        resBstru= GetResidueObj(pdbid, chainidB, resnamB, resnumB)
+        if pdbid == self.protein2uniprot[0]:
+            protein = self.protein2uniprot[1]
+        else:
+            protein = self.GetXMLObj(pdbid)
+            self.protein2uniprot = [pdbid, protein]
+
+        resAseq = protein.getResidue(chainidA, resnumA)
+        resBseq = protein.getResidue(chainidB, resnumB)
+
+        dist_spa = GetSpatialDistance(resAstru, resBstru)
+        dist_seq = resAseq.getSeqDistance(resBseq)
+        print dist_spa, dist_seq
+
+    def GetXMLObj(self, pdbid):
+        filedir = os.path.join(self.xmldir, pdbid[1:3].lower(), pdbid.lower() + ".xml.gz")
+        return processOneXML(filedir)
 
 def GetSeqSpaPair(protein):
     reslist  = protein.getResidues()
@@ -67,6 +92,8 @@ def SavePairList(pairlist):
     fileobj.close()
 
 if __name__ == "__main__":
-    filedir  = XMLDIR
-    proteins, uniprotdict = processAllXML(filedir)
-    GetSeqSpaAll(uniprotdict)
+    #filedir  = XMLDIR
+    #proteins, uniprotdict = processAllXML(filedir)
+    #GetSeqSpaAll(uniprotdict)
+    seqspa = GetSeqSpa()
+    seqspa.GetSeqSpafor2Residue("10gs", "A", "A", "Pro", "Pro", 2, 100)

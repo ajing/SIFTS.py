@@ -108,7 +108,7 @@ def RunAllBioLiPPDB():
     #for pdb in pdblist:
     #    print pdb
 
-    pool = Pool(processes = 4)
+    pool = Pool(processes = 5)
     result = pool.map_async( RunOnePDB, pdblist)
     resulttxt = result.wait()
     print resulttxt

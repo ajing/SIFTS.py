@@ -91,6 +91,7 @@ class Residue:
 class Protein:
     def __init__(self, pdbid):
         self.resList = []
+        self.resDict = dict()
         self.uniprots= []
         self.pdbid = pdbid
 
@@ -101,6 +102,12 @@ class Protein:
         if not isinstance(residue, Residue):
             raise TypeError("wrong type for residue")
         self.resList.append(residue)
+        chainid  = residue.getPDBresChain()
+        resnum   = residue.getPDBresNum()
+        if not chainid in self.resDict:
+            self.resDict[chainid] = dict()
+        if not resnum in self.resDict[chainid]:
+            self.resDict[chainid][resnum] = residue
 
     def appendNewUniProt(self, uniprot):
         if not isinstance(uniprot, UniProtInfo):
@@ -110,6 +117,12 @@ class Protein:
 
     def getResidues(self):
         return self.resList
+
+    def getResidue(self, chainid, resnum):
+        try:
+            return self.resDict[chainid][resnum]
+        except:
+            return None
 
     def getUniProts(self):
         return self.uniprots
