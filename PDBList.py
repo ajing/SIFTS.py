@@ -33,6 +33,10 @@ from Bio._py3k import urlretrieve as _urlretrieve
 
 __docformat__ = "restructuredtext en"
 
+__file_name_format__ = "pdb%s.ent"
+__file_name_format__ = "%s.pdb1"
+__download_dir__     = "/pub/pdb/data/structures"
+
 class PDBList(object):
     """
     This class provides quick access to the structure lists on the
@@ -185,10 +189,11 @@ class PDBList(object):
         """
         # Get the compressed PDB structure
         code = pdb_code.lower()
-        archive_fn = "pdb%s.ent.gz" % code
+        archive_fn = (__file_name_format__ + ".gz") % code
         pdb_dir = "divided" if not obsolete else "obsolete"
         url = (self.pdb_server +
-               '/pub/pdb/data/structures/%s/pdb/%s/%s' %
+        #       __download_dir__ + '/%s/pdb/%s/%s' %
+               __download_dir__ + '/%s/%s/%s' %
                (pdb_dir, code[1:3], archive_fn))
 
         # Where does the final PDB file get saved?
@@ -202,7 +207,7 @@ class PDBList(object):
             os.makedirs(path)
 
         filename = os.path.join(path, archive_fn)
-        final_file = os.path.join(path, "pdb%s.ent" % code)  # (decompressed)
+        final_file = os.path.join(path, __file_name_format__ % code)  # (decompressed)
 
         # Skip download if the file already exists
         if not self.overwrite:
@@ -248,13 +253,13 @@ class PDBList(object):
         for pdb_code in obsolete:
             if self.flat_tree:
                 old_file = os.path.join(self.local_pdb,
-                                        'pdb%s.ent' % pdb_code)
+                                        __file_name_format__ % pdb_code)
                 new_dir = self.obsolete_pdb
             else:
                 old_file = os.path.join(self.local_pdb, pdb_code[1:3],
-                                        'pdb%s.ent' % pdb_code)
+                                        __file_name_format__ % pdb_code)
                 new_dir = os.path.join(self.obsolete_pdb, pdb_code[1:3])
-            new_file = os.path.join(new_dir, 'pdb%s.ent' % pdb_code)
+            new_file = os.path.join(new_dir, __file_name_format__ % pdb_code)
             if os.path.isfile(old_file):
                 if not os.path.isdir(new_dir):
                     os.mkdir(new_dir)

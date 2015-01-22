@@ -8,7 +8,7 @@ from SIFTS.SIFTSXMLMapModel import Residue
 COLNAME = ["pdbid", "snpid", "chainid", "resnum", "resnam", "alt_residue", "chr", "strand", "chr_position", "secondary", "solubility", "ligandcode", "conservation", "domain_interface", "genename", "SwissProt_AC", "FTID", "aachange", "vartype", "dbSNPid", "disease_name"]
 
 SNP_INFILE = "./Data/snpannotate.txt"
-OUTFILE    = "./Result/snp_dist.txt"
+OUTFILE    = "./Result/snp_dist_test.txt"
 
 def SNP_pair_dist(pdbid, reslist):
     getsesp = GetSeqSpa()
@@ -60,9 +60,11 @@ def ParseInput(snploc_file):
 
 def SNP_pair_all(pdbdict):
     outobj = open(OUTFILE, "w")
-    for pdbid in pdbdict:
-        content = SNP_pair_dist(pdbid, pdbdict[pdbid])
-        outobj.write(content)
+    #for pdbid in pdbdict:
+    #    content = SNP_pair_dist(pdbid, pdbdict[pdbid])
+    #    outobj.write(content)
+    print pdbdict.keys()
+    content = SNP_pair_dist("1HAQ", pdbdict["1HAQ"])
     outobj.close()
 
 def main():

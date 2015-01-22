@@ -29,8 +29,8 @@ def GetAllDist(bslist):
             resname = residue.get_resname()
             reschain= residue.get_full_id()[2]
             resnum  = residue.id[1]
-            mindist = eachbs.getminDist(residue)
-            info    = [pdbid, chainid, bscode, resname, reschain, resnum, mindist]
+            min_spa_dist, min_seq_dist = eachbs.getminDist(resname, reschain, resnum)
+            info    = [pdbid, chainid, bscode, resname, reschain, resnum, min_spa_dist, min_seq_dist]
             line    = "\t".join(map(str, info))
             file_obj.write(line + "\n")
     file_obj.close()

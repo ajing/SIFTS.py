@@ -51,12 +51,17 @@ class UniProtInfo:
 
 
 class Residue:
-    def __init__(self, resnum, resnam, reschain):
+    def __init__(self, resnum, resnam, reschain, snpid = None):
         # residue name and number from PDBe
         self.resName = resnam
         self.resNum  = int(resnum)
         self.resChain= reschain
         self.uniprot = None
+        self._snpid   = snpid
+
+    @property
+    def snpid(self):
+        return self._snpid
 
     def getPDBresName(self):
         return self.resName
