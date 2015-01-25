@@ -76,6 +76,8 @@ def BSParser(infile):
             print "Cannot find file " + pdbid
     return bslist
 
+def BSParser_():
+
 if __name__ == "__main__":
     bslist = BSParser(BSDIR)
     GetAllDist(bslist)
