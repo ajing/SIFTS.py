@@ -5,6 +5,7 @@
 #PDBDIR = "pdbtest"
 #XMLDIR = "xmltest"
 PDBDIR = "pdb"
+#PDBDIR = "../ligandNet/2013_biounits"
 XMLDIR = "xml"
 
 PAIRFILE = "pair.txt"

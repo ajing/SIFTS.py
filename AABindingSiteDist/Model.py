@@ -3,7 +3,7 @@ from SIFTS.SIFTSXMLMapModel import Residue
 from GetDistMap import GetSeqSpa
 from PDBtools import GetResidueObj
 
-PDBDIR = "./Data/receptorConCat"
+#PDBDIR = "./Data/receptorConCat"
 BSDIR  = "./Data/bindingsite2.txt"
 OUTDIR = "distaa_biolip_2.txt"
 SNPINFO= "./Data/snp_logic_snp.txt"
