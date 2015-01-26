@@ -7,7 +7,7 @@ from BioUnitModel import Dist, Residue
 
 BSLineOrder = ["PDBID", "proteinChainID", "resnam", "resnum"]
 
-BSResidueFile = ".txt"
+BSResidueFile = "../.txt"
 BIOUNITDIR    = "../ligandNet/MOAD2013"
 
 def GetAllPDBDist():
@@ -25,7 +25,7 @@ class AllBSResidueList:
         self.parserBSFile()
 
     def parserBSFile(self):
-        for line for open(BSResidueFile):
+        for line in open(BSResidueFile):
             content = line.strip().split("\t")
             pdbid   = content[BSLineOrder.index("PDBID")]
             prochain= content[BSLineOrder.index("proteinChainID")]
