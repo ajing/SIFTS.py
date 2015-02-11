@@ -7,7 +7,7 @@ from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
 OUTOBJ = "dsspout_pdb.txt"
-BIODIR = "biounit"
+BIODIR = "2013_biounits"
 
 def RunDSSP(model, pdbfile):
     dssp = DSSP(model, pdbfile)
@@ -26,13 +26,16 @@ def ProcessDSSP(reslist):
         residue = eachres["res_obj"]
         resid = residue.get_full_id()
         # PDBID, model id, chain id, residue name, residue num, secondary structure, ssa, rsa
-        newlist.append([resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"]])
+        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"]])
     return newlist
 
 def RunEachBioUnit(biounit):
-    p = PDBParser()
+    p = PDBParser(PERMISSIVE = 1)
     pdbname= biounit.split("/")[-1]
-    models = p.get_structure(pdbname, biounit)
+    try:
+        models = p.get_structure(pdbname, biounit)
+    except:
+        return None
     outlines = []
     for model in models:
         dssp_model = RunDSSP(model, biounit)
@@ -48,6 +51,7 @@ def AllBioUnit(directory):
         if lines:
             content = "\n".join(["\t".join(map(str, x)) for x in lines])
             out_obj.write(content)
+    out_obj.close()
 
 if __name__ == "__main__":
     #EachBioUnit("pdb10gs.ent")
