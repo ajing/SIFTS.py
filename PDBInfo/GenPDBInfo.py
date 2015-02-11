@@ -7,18 +7,20 @@ from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
 OUTOBJ = "dsspout_pdb.txt"
-BIODIR = "2013_biounits"
+BIODIR = "../../ligandNet/2013_biounits_noligand"
 OUTDIR = "out"
+#DSSPDIR= "./dssp-2.0.4-linux-amd64"
+DSSPDIR= "dssp"
 
 def RunDSSP(model, pdbfile):
-    dssp = DSSP(model, pdbfile)
+    dssp = DSSP(model, pdbfile, DSSPDIR)
     reslist = []
     for residue in dssp:
         resinfo = residue[0]
         second_str = residue[1]
         ssa     = residue[2]
         rsa     = residue[3]
-        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa})
+        reslistappend({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa})
     return reslist
 
 def ProcessDSSP(reslist):
