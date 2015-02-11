@@ -8,6 +8,7 @@ from Bio.PDB import DSSP
 
 OUTOBJ = "dsspout_pdb.txt"
 BIODIR = "2013_biounits"
+OUTDIR = "out"
 
 def RunDSSP(model, pdbfile):
     dssp = DSSP(model, pdbfile)
@@ -43,15 +44,21 @@ def RunEachBioUnit(biounit):
         outlines  += lines
     return outlines
 
+def FileFilter(filelist):
+    outfiles = os.listdir(OUTDIR)
+    outfileb = [x.split(".")[-2] for x in outfiles]
+    return [x for x in filelist if not x in outfileb]
+
 def AllBioUnit(directory):
-    out_obj = open(OUTOBJ, "w")
-    for eachbiounit in os.listdir(directory):
+    for eachbiounit in FileFilter(os.listdir(directory)):
         biounit = os.path.join(directory, eachbiounit)
+        output  = eachbiounit + ".out"
+        outobj  = open(os.path.join(OUTDIR, output), "w")
         lines   = RunEachBioUnit(biounit)
         if lines:
             content = "\n".join(["\t".join(map(str, x)) for x in lines])
-            out_obj.write(content)
-    out_obj.close()
+            outobj.write(content)
+        outobj.close()
 
 if __name__ == "__main__":
     #EachBioUnit("pdb10gs.ent")
