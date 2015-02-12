@@ -28,6 +28,10 @@ def LongLigand(chain, residue, longligand):
     if chain.id == longligand["ChainID"] and residue.id[1] - int(longligand["ResNum"]) < lig_len * 1.1 and residue.resname in longligand["LigName"]:
         chain.detach_child(residue.id)
 
+def FileFilter(filelist, exist_dir):
+    outfiles = os.listdir(exist_dir)
+    return [x for x in filelist if not x in outfiles]
+
 def RemoveLigandsOneBioUnit(biounit, ligandlist):
     # ligandlist is a residue list with residue chain id, name and residue number
     p = PDBParser(PERMISSIVE = 1)
@@ -36,7 +40,6 @@ def RemoveLigandsOneBioUnit(biounit, ligandlist):
         models = p.get_structure(pdbname, biounit)
     except:
         return None
-    print ligandlist
     #for model in models:
     #    for chain in model:
     #        for residue in chain:
@@ -58,10 +61,12 @@ def RemoveLigandsOneBioUnit(biounit, ligandlist):
 
 def RemoveLigandsAll():
     pdbligand = ProcessLigFile(LIGANDLIST)
-    for eachbiounit in os.listdir(BIOUNITDIR):
+    fileleft  = FileFilter(os.listdir(BIOUNITDIR), BIOSTRDIR)
+    for eachbiounit in fileleft:
         biounit = os.path.join(BIOUNITDIR, eachbiounit)
         pdb     = eachbiounit.split(".")[0].upper()
-        RemoveLigandsOneBioUnit(biounit, pdbligand[pdb])
+        if pdb in pdbligand:
+            RemoveLigandsOneBioUnit(biounit, pdbligand[pdb])
 
 if __name__ == "__main__":
     #ProcessLigFile(LIGANDLIST)
