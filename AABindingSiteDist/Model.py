@@ -1,11 +1,14 @@
 
 from SIFTS.SIFTSXMLMapModel import Residue
-from GetDistMap import GetSpatialDistance
+from GetDistMap import GetSeqSpa
 from PDBtools import GetResidueObj
 
-PDBDIR = "./Data/receptorConCat"
+#PDBDIR = "./Data/receptorConCat"
 BSDIR  = "./Data/bindingsite2.txt"
-OUTDIR = "distaa_biolip.txt"
+OUTDIR = "distaa_biolip_2.txt"
+SNPINFO= "./Data/snp_logic_snp.txt"
+
+_getseqspa = GetSeqSpa()
 
 class BindingSite:
     def __init__(self, pdbid, chainid, bscode, ligchainid, ligname):
@@ -36,8 +39,9 @@ class BindingSite:
         resname = res.getPDBresName()
         resnum = res.getPDBresNum()
 
-    def getminDist(self, res):
+    def getminDist(self, tar_resnam, tar_reschain, tar_resnum):
         mindist = float("inf")
+        minseqdist = float("inf")
         for each in self.residuelist:
             resname = each.getPDBresName()
             resnum  = each.getPDBresNum()
@@ -47,13 +51,14 @@ class BindingSite:
                 print e
                 continue
             try:
-                dist = GetSpatialDistance(res_obj, res)
+                spa_dist, seq_dist = _getseqspa.GetSeqSpafor2Residue(self._pdbid, self._chainid, tar_reschain, resname, tar_resnam, resnum, tar_resnum)
             except Exception as e:
                 print e
                 continue
-            if dist < mindist:
-                mindist = dist
-        return mindist
+            if spa_dist < mindist:
+                mindist = spa_dist
+                minseqdist = seq_dist
+        return mindist, minseqdist
 
     def __str__(self):
         return "PDBID: %s, chainid: %s, bscode: %s, numres: %s;" %(self.PDBID, self.chainid, self.bscode, len(self.residuelist))

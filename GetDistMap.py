@@ -21,8 +21,15 @@ class GetSeqSpa:
         self.xmldir = XMLDIR
 
     def GetSeqSpafor2Residue(self, pdbid, chainidA, chainidB, resnamA, resnamB, resnumA, resnumB):
-        resAstru= GetResidueObj(pdbid, chainidA, resnamA, resnumA)
-        resBstru= GetResidueObj(pdbid, chainidB, resnamB, resnumB)
+        pdbid   = pdbid.lower()
+
+        try:
+            resAstru= GetResidueObj(pdbid, chainidA, resnamA, resnumA)
+            resBstru= GetResidueObj(pdbid, chainidB, resnamB, resnumB)
+        except Exception as e:
+            print e
+            return None, None
+
         if pdbid == self.protein2uniprot[0]:
             protein = self.protein2uniprot[1]
         else:
@@ -33,8 +40,15 @@ class GetSeqSpa:
         resBseq = protein.getResidue(chainidB, resnumB)
 
         dist_spa = GetSpatialDistance(resAstru, resBstru)
-        dist_seq = resAseq.getSeqDistance(resBseq)
-        print dist_spa, dist_seq
+        try:
+            dist_seq = resAseq.getSeqDistance(resBseq)
+        except:
+            dist_seq = False
+
+        #if not dist_seq:
+        #    return None, None
+
+        return dist_spa, dist_seq
 
     def GetXMLObj(self, pdbid):
         filedir = os.path.join(self.xmldir, pdbid[1:3].lower(), pdbid.lower() + ".xml.gz")
@@ -97,3 +111,4 @@ if __name__ == "__main__":
     #GetSeqSpaAll(uniprotdict)
     seqspa = GetSeqSpa()
     seqspa.GetSeqSpafor2Residue("10gs", "A", "A", "Pro", "Pro", 2, 100)
+    seqspa.GetSeqSpafor2Residue("10gs", "A", "A", "", "", 2, 100)

@@ -2,8 +2,10 @@
     Filter all distance, only keep mutated residue
 '''
 
+from Model import OUTDIR, SNPINFO
+
 SNPLineOrder = ["PDBID", "ChainID", "SNPID", "ResNum", "ResName"]
-DISTOrder = ["PDBID", "ChainID", "BSID", "ResName", "ResChain", "ResNum", "Distance"]
+DISTOrder = ["PDBID", "ChainID", "BSID", "ResName", "ResChain", "ResNum", "Distance", "ResDist"]
 
 #from SCOPData import protein_letters_3to1
 
@@ -45,7 +47,7 @@ def filterFile(infile, filtersnp):
     outobj.close
 
 if __name__ == "__main__":
-    snpdict   = SNPResParser("../Data/snp_logic_snp.txt")
+    snpdict   = SNPResParser(SNPINFO)
     filterobj = FilterSNP(snpdict)
     #filterFile("../distaa.txt", filterobj)
-    filterFile("../distaa_biolip.txt", filterobj)
+    filterFile(OUTDIR, filterobj)
