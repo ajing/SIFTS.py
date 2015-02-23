@@ -6,18 +6,17 @@ import os
 from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
-BIODIR = "../../ligandNet/2013_biounits_noligand"
-OUTOBJ = "dsspout_pdb.txt"
+BIODIR = "2013_biounits_noligand"
 #BIODIR = "../../ligandNet/2013_biounits_noligand"
-BIODIR = "test"
 OUTDIR = "out"
 #DSSPDIR= "./dssp-2.0.4-linux-amd64"
 DSSPDIR= "dssp"
 
 def RunDSSP(model, pdbfile):
-    print pdbfile
-    print model
-    dssp = DSSP(model, pdbfile)
+    try:
+        dssp = DSSP(model, pdbfile)
+    except:
+        return None
     reslist = []
     for residue in dssp:
         resinfo = residue[0]
@@ -46,8 +45,9 @@ def RunEachBioUnit(biounit):
     outlines = []
     for model in models:
         dssp_model = RunDSSP(model, biounit)
-        lines      = ProcessDSSP(dssp_model)
-        outlines  += lines
+        if dssp_model:
+            lines      = ProcessDSSP(dssp_model)
+            outlines  += lines
     return outlines
 
 def FileFilter(filelist, exist_dir):
