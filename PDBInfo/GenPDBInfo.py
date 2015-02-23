@@ -8,7 +8,7 @@ from Bio.PDB import DSSP
 
 BIODIR = "2013_biounits_noligand"
 #BIODIR = "../../ligandNet/2013_biounits_noligand"
-OUTDIR = "out"
+OUTDIR = "out2"
 #DSSPDIR= "./dssp-2.0.4-linux-amd64"
 DSSPDIR= "dssp"
 
@@ -23,7 +23,9 @@ def RunDSSP(model, pdbfile):
         second_str = residue[1]
         ssa     = residue[2]
         rsa     = residue[3]
-        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa})
+        phi     = residue[4]
+        psi     = residue[5]
+        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa, "phi": phi, "psi": psi})
     return reslist
 
 def ProcessDSSP(reslist):
@@ -32,7 +34,7 @@ def ProcessDSSP(reslist):
         residue = eachres["res_obj"]
         resid = residue.get_full_id()
         # PDBID, model id, chain id, residue name, residue num, secondary structure, ssa, rsa
-        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"]])
+        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"], eachres["phi"], eachres["psi"]])
     return newlist
 
 def RunEachBioUnit(biounit):
