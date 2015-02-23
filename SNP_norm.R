@@ -16,9 +16,9 @@ protein_annotate[ which(protein_annotate$distance <= 4.0 | !is.na(protein_annota
 table(protein_annotate$VarType, protein_annotate$location)
 
 # The first table
-get_stat_eachtype <- function(protein_annotate, snp_type){
-  allres_table <- table(protein_annotate$location)
-  loc_table = table(subset(protein_annotate, VarType == snp_type)$location)
+get_stat_eachtype <- function(p_annotate, snp_type){
+  allres_table <- table(p_annotate$location)
+  loc_table = table(subset(p_annotate, VarType == snp_type)$location)
   print("Observed")
   print(loc_table)
   print(sum(loc_table))
@@ -56,20 +56,22 @@ deal_with_na <- function(x) {
   factor(x)
 }
 
-odds_ratio_stat <- function(protein_annotate, vartype){
-table_res <- table(deal_with_na(protein_annotate$VarType == vartype), deal_with_na(protein_annotate$location == "Core"))
+odds_ratio_stat <- function(p_annotate, vartype){
+table_res <- table(deal_with_na(p_annotate$VarType == vartype), deal_with_na(p_annotate$location == "Core"))
 table_res <- apply(table_res, 1:2, as.numeric)
 rownames(table_res) <- c(paste("Not", vartype), vartype)
 colnames(table_res) <- c("Not Core", "Core")
 print(oddsratio.wald(table_res))
 
-table_res <- table(deal_with_na(subset(protein_annotate, location %in% c("Surface", "Binding Site"))$VarType == vartype), deal_with_na(subset(protein_annotate, location %in% c("Surface", "Binding Site"))$location == "Surface"))
+table_res <- table(deal_with_na(subset(p_annotate, location %in% c("Surface", "Binding Site"))$VarType == vartype),
+        deal_with_na(subset(p_annotate, location %in% c("Surface", "Binding Site"))$location == "Surface"))
 table_res <- apply(table_res, 1:2, as.numeric)
 rownames(table_res) <- c(paste("Not", vartype), vartype)
 colnames(table_res) <- c("Binding Site", "Surface")
 print(oddsratio.wald(table_res))
 
-table_res <- table(deal_with_na(subset(protein_annotate, location %in% c("Core", "Binding Site"))$VarType == vartype), deal_with_na(subset(protein_annotate, location %in% c("Core", "Binding Site"))$location == "Core"))
+table_res <- table(deal_with_na(subset(p_annotate, location %in% c("Core", "Binding Site"))$VarType == vartype),
+        deal_with_na(subset(p_annotate, location %in% c("Core", "Binding Site"))$location == "Core"))
 table_res <- apply(table_res, 1:2, as.numeric)
 rownames(table_res) <- c(paste("Not", vartype), vartype)
 colnames(table_res) <- c("Binding Site", "Core")

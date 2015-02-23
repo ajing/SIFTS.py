@@ -6,10 +6,9 @@ import os
 from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
+#BIODIR = "test"
 BIODIR = "../../ligandNet/2013_biounits_noligand"
 OUTOBJ = "dsspout_pdb.txt"
-#BIODIR = "../../ligandNet/2013_biounits_noligand"
-BIODIR = "test"
 OUTDIR = "out"
 #DSSPDIR= "./dssp-2.0.4-linux-amd64"
 DSSPDIR= "dssp"
@@ -33,7 +32,7 @@ def ProcessDSSP(reslist):
         residue = eachres["res_obj"]
         resid = residue.get_full_id()
         # PDBID, model id, chain id, residue name, residue num, secondary structure, ssa, rsa
-        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"]])
+        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"], eachres["phi"], eachres["psi"]])
     return newlist
 
 def RunEachBioUnit(biounit):
