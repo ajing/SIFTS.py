@@ -77,7 +77,8 @@ fish_result$p.value
 fish_result$estimate
 fish_result$conf.int
 
-# For each amino acid
+# For amino acid mutated in binding site
+# the subset I am interested in is subset(protein_annotate, 'location' == "Binding Site")
 amino_names <- unique(DF$Gender)
 ratio_amino <- data.frame(amino_names)
 for (each in amino_names){
