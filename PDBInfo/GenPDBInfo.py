@@ -6,7 +6,6 @@ import os
 from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
-#BIODIR = "test"
 BIODIR = "../../ligandNet/2013_biounits_noligand"
 #BIODIR = "2013_biounits_noligand"
 OUTDIR = "out"
@@ -24,7 +23,9 @@ def RunDSSP(model, pdbfile):
         second_str = residue[1]
         ssa     = residue[2]
         rsa     = residue[3]
-        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa})
+        phi     = residue[4]
+        psi     = residue[5]
+        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa, "phi": phi, "psi": psi})
     return reslist
 
 def ProcessDSSP(reslist):
