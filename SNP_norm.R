@@ -1,9 +1,10 @@
 # Script for normalized SNP data set
 
 protein_annotate<- read.table("./Data/SNPOnStruct_final.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+protein_annotate<- read.table("./Data/SNPOnStruct_final_3.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 
-# 
-colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "resolution", "UniProtID", "uniprot_resnum", "BindingSiteComment", "distance", "ligandName", "genename", "FTID", "AABefore", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "AABeforeProp", "AAAfterProp")
+#
+colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "resolution", "UniProtID", "uniprot_resnum", "BindingSiteComment", "distance", "ligandName", "genename", "FTID", "AABefore", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "interproname")
 
 protein_annotate$location = "Core"
 
@@ -15,10 +16,9 @@ protein_annotate[ which(protein_annotate$distance <= 4.0 | !is.na(protein_annota
 table(protein_annotate$VarType, protein_annotate$location)
 
 # The first table
-allres_table <- table(protein_annotate$location)
-
-get_stat_eachtype <- function(snp_type){
-  loc_table = table(subset(protein_annotate, VarType == snp_type)$location)
+get_stat_eachtype <- function(p_annotate, snp_type){
+  allres_table <- table(p_annotate$location)
+  loc_table = table(subset(p_annotate, VarType == snp_type)$location)
   print("Observed")
   print(loc_table)
   print(sum(loc_table))
@@ -51,23 +51,44 @@ result$conf.int
 install.packages(epitools)
 library("epitools")
 
-# Disease
-table_res <- table(protein_annotate$VarType == "Disease", protein_annotate$location == "Core")
-rownames(table_res) <- c("Non Disease", "Disease")
-colnames(table_res) <- c("Non Core", "Core")
-oddsratio.wald(table_res)
+deal_with_na <- function(x) {
+  x[is.na(x)] = F
+  factor(x)
+}
 
+odds_ratio_stat <- function(p_annotate, vartype){
+table_res <- table(deal_with_na(p_annotate$VarType == vartype), deal_with_na(p_annotate$location == "Core"))
+table_res <- apply(table_res, 1:2, as.numeric)
+rownames(table_res) <- c(paste("Not", vartype), vartype)
+colnames(table_res) <- c("Not Core", "Core")
+print(oddsratio.wald(table_res))
 
-table_res <- table(subset(protein_annotate, location %in% c("Surface", "Binding Site"))$VarType == "Disease", subset(protein_annotate, location %in% c("Surface", "Binding Site"))$location == "Surface")
-rownames(table_res) <- c("Non Disease", "Disease")
+table_res <- table(deal_with_na(subset(p_annotate, location %in% c("Surface", "Binding Site"))$VarType == vartype),
+        deal_with_na(subset(p_annotate, location %in% c("Surface", "Binding Site"))$location == "Surface"))
+table_res <- apply(table_res, 1:2, as.numeric)
+rownames(table_res) <- c(paste("Not", vartype), vartype)
 colnames(table_res) <- c("Binding Site", "Surface")
-oddsratio.wald(table_res)
+print(oddsratio.wald(table_res))
 
-
-table_res <- table(subset(protein_annotate, location %in% c("Core", "Binding Site"))$VarType == "Disease", subset(protein_annotate, location %in% c("Core", "Binding Site"))$location == "Core")
-rownames(table_res) <- c("Non Disease", "Disease")
+table_res <- table(deal_with_na(subset(p_annotate, location %in% c("Core", "Binding Site"))$VarType == vartype),
+        deal_with_na(subset(p_annotate, location %in% c("Core", "Binding Site"))$location == "Core"))
+table_res <- apply(table_res, 1:2, as.numeric)
+rownames(table_res) <- c(paste("Not", vartype), vartype)
 colnames(table_res) <- c("Binding Site", "Core")
-oddsratio.wald(table_res)
+print(oddsratio.wald(table_res))
+}
+
+# Disease
+odds_ratio_stat(protein_annotate, "Disease")
+
+# Polymorphism
+odds_ratio_stat(protein_annotate, "Polymorphism")
+
+# Polymorphism without antigen
+odds_ratio_stat(subset(protein_annotate, !grepl("*antigen*", x = proteinname)), "Polymorphism")
+
+# Unclassified
+odds_ratio_stat(protein_annotate, "Unclassified")
 
 # Fisher's Exact Test
 # examine the significance of the association (contingency) between the two kinds of classification.
@@ -83,7 +104,7 @@ amino_names <- unique(DF$Gender)
 ratio_amino <- data.frame(amino_names)
 for (each in amino_names){
   fish_result = fisher.test(table(DF$Admit, DF$Gender))
-  
+
 }
 
 # plots odds ratio with error bar
@@ -99,7 +120,7 @@ library(ggplot2)
 # http://stackoverflow.com/questions/14069629/plotting-confidence-intervals
 ggplot(dat, aes(x = pollut, y = or, ymin = lcl, ymax = ucl)) + geom_pointrange(aes(col = factor(lag)), position=position_dodge(width=0.30)) + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("")
 
-# Also odds ratio for each type of amino acids 
+# Also odds ratio for each type of amino acids
 # for disease and polymorphism seperately
 ggplot(dat, aes(x = pollut, y = or, ymin = lcl, ymax = ucl)) + geom_pointrange(aes(col = factor(lag)), position=position_dodge(width=0.30)) + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("")
 

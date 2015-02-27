@@ -4,33 +4,27 @@
 
 import os
 from Bio.PDB import PDBParser
-from Bio.PDB import DSSP
+from NACCESS import NACCESS
 
-BIODIR = "../../ligandNet/2013_biounits_noligand"
-#BIODIR = "2013_biounits_noligand"
-OUTDIR = "out"
-#DSSPDIR= "./dssp-2.0.4-linux-amd64"
-DSSPDIR= "dssp"
+BIODIR = "2013_biounits_noligand"
+#BIODIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/test"
+OUTDIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/out_naccess"
+NACCESS_DIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/naccess2.1.1/naccess"
 
-def RunDSSP(model, pdbfile):
+COLNAME = ["all_atoms_abs", "all_atoms_rel", "non_polar_abs", "non_polar_rel", "all_polar_abs", "all_polar_rel"]
+
+def RunNACCESS(model, pdbfile):
+    #print model, pdbfile
+    naccess = NACCESS(model, pdbfile, NACCESS_DIR)
     try:
-        dssp = DSSP(model, pdbfile)
+        naccess = NACCESS(model, pdbfile, NACCESS_DIR)
     except:
         return None
     reslist = []
-    for residue in dssp:
+    for residue in naccess:
         resinfo = residue[0]
-        second_str = residue[1]
-        ssa     = residue[2]
-        rsa     = residue[3]
-        phi     = residue[4]
-        psi     = residue[5]
-        reslist.append({"res_obj": resinfo, "sec_str": second_str, "ssa": ssa, "rsa": rsa, "phi": phi, "psi": psi})
+        reslist.append(dict({"res_obj": resinfo}.items() + residue[1].items()))
     return reslist
-
-def RunNACCESS(model, pdbfile):
-    pass
-
 
 def ProcessDSSP(reslist):
     newlist = []
@@ -38,28 +32,35 @@ def ProcessDSSP(reslist):
         residue = eachres["res_obj"]
         resid = residue.get_full_id()
         # PDBID, model id, chain id, residue name, residue num, secondary structure, ssa, rsa
-        newlist.append([resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1], eachres["sec_str"], eachres["ssa"], eachres["rsa"], eachres["phi"], eachres["psi"]])
+        newline = [resid[0].split(".")[-2][-4:], resid[0], resid[1], resid[2], residue.resname, resid[3][1]]
+        for names in COLNAME:
+            newline.append(eachres[names])
+        newlist.append(newline)
     return newlist
 
 def RunEachBioUnit(biounit):
     p = PDBParser(PERMISSIVE = 1)
     pdbname= biounit.split("/")[-1]
     try:
+        #print "models for:", pdbname, biounit
         models = p.get_structure(pdbname, biounit)
     except:
         return None
     outlines = []
     for model in models:
-        dssp_model = RunDSSP(model, biounit)
+        dssp_model = RunNACCESS(model, biounit)
         if dssp_model:
             lines      = ProcessDSSP(dssp_model)
             outlines  += lines
     return outlines
 
+#def FileFilter(filelist, exist_dir):
+#    outfiles = os.listdir(exist_dir)
+#    outfileb = [x.split(".")[:-4] for x in outfiles]
+#    return [x for x in filelist if not x in outfileb]
+
 def FileFilter(filelist, exist_dir):
-    outfiles = os.listdir(exist_dir)
-    outfileb = [x.split(".")[:-4] for x in outfiles]
-    return [x for x in filelist if not x in outfileb]
+    return filelist
 
 def AllBioUnit(directory):
     fileleft = FileFilter(os.listdir(directory), OUTDIR)
@@ -74,5 +75,5 @@ def AllBioUnit(directory):
         outobj.close()
 
 if __name__ == "__main__":
-    #EachBioUnit("pdb10gs.ent")
+   # RunEachBioUnit("10gs.bio1")
     AllBioUnit(BIODIR)
