@@ -1,10 +1,14 @@
 # Script for normalized SNP data set
 
 protein_annotate<- read.table("./Data/SNPOnStruct_final.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+# with aabefore and aaafter
 protein_annotate<- read.table("./Data/SNPOnStruct_final_3.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+# remove redundancy in gene level.
+protein_annotate<- read.table("./Data/SNPOnStruct_final_7.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+
 
 #
-colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "resolution", "UniProtID", "uniprot_resnum", "BindingSiteComment", "distance", "ligandName", "genename", "FTID", "AABefore", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "interproname")
+colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "BindingSiteComment", "distance", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
 
 protein_annotate$location = "Core"
 
@@ -14,6 +18,45 @@ protein_annotate$location[protein_annotate$ssa > 5] = "Surface"
 protein_annotate[ which(protein_annotate$distance <= 4.0 | !is.na(protein_annotate$BindingSiteComment)),'location'] = "Binding Site"
 
 table(protein_annotate$VarType, protein_annotate$location)
+
+
+# only keep UniProt with at least one nsSNP
+snp_num = ddply(protein_annotate, .(UniProtID), summarise, N = length(unique(uniprot_resnum[!is.na(VarType)])))
+protein_annotate_withsnp = subset(protein_annotate, UniProtID %in% factor(unique(subset(protein_annotate, !is.na(VarType))$UniProtID)))
+length(unique(protein_annotate_withsnp$UniProtID))
+
+> table(protein_annotate_withsnp$location)
+
+Binding Site         Core      Surface 
+17010        49292       154993 
+
+> length(unique(protein_annotate[protein_annotate$VarType == "Unclassified",]$UniProtID))
+[1] 150
+> length(unique(protein_annotate[protein_annotate$VarType == "Disease",]$UniProtID))
+[1] 246
+> length(unique(protein_annotate[protein_annotate$VarType == "Polymorphism",]$UniProtID))
+[1] 581
+
+
+> dim(unique(protein_annotate[protein_annotate$VarType == "Polymorphism",][,c("UniProtID", "uniprot_r
+esnum")]))
+[1] 1656    2
+> dim(unique(protein_annotate[protein_annotate$VarType == "Disease",][,c("UniProtID", "uniprot_resnum
+")]))
+[1] 3006    2
+> dim(unique(protein_annotate[protein_annotate$VarType == "Unclassified",][,c("UniProtID", "uniprot_r
+esnum")]))
+[1] 813   2
+
+
+> dim(unique(protein_annotate[protein_annotate$VarType == "Unclassified",]))
+[1] 1766   34
+> dim(unique(protein_annotate[protein_annotate$VarType == "Polymorphism",]))
+[1] 1717   34
+> dim(unique(protein_annotate[protein_annotate$VarType == "Disease",]))
+[1] 3709   34
+
+
 
 # The first table
 get_stat_eachtype <- function(p_annotate, snp_type){
@@ -85,7 +128,7 @@ odds_ratio_stat(protein_annotate, "Disease")
 odds_ratio_stat(protein_annotate, "Polymorphism")
 
 # Polymorphism without antigen
-odds_ratio_stat(subset(protein_annotate, !grepl("*antigen*", x = proteinname)), "Polymorphism")
+odds_ratio_stat(subset(protein_annotate, !grepl("*histocompatibility antigen*", x = proteinname)), "Polymorphism")
 
 # Unclassified
 odds_ratio_stat(protein_annotate, "Unclassified")
@@ -100,12 +143,35 @@ fish_result$conf.int
 
 # For amino acid mutated in binding site
 # the subset I am interested in is subset(protein_annotate, 'location' == "Binding Site")
-amino_names <- unique(DF$Gender)
-ratio_amino <- data.frame(amino_names)
-for (each in amino_names){
-  fish_result = fisher.test(table(DF$Admit, DF$Gender))
-
+p_annotate_bs <- subset(protein_annotate, location == "Binding Site")
+p_annotate_bs <- subset(protein_annotate, location %in% c("Surface", "Binding Site"))
+amino_names <- factor(unique(p_annotate_bs$resnam)[1:20])
+each = as.character(amino_names[1])
+vartype = "Disease"
+vartypes   = c("Disease", "Polymorphism", "Unclassified")
+ratio_amino <- data.frame(merge(amino_names, vartypes, all = TRUE))
+colnames(ratio_amino) <- c("amino_names", "vartypes")
+for (vartype in vartypes) {
+  for (each in amino_names){
+    print(each)
+    print(vartype)
+    each = as.character(each)
+    table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                       deal_with_na(as.character(p_annotate_bs$resnam) == each))
+    table_res <- apply(table_res, 1:2, as.numeric)
+    rownames(table_res) <- c(paste("Not", vartype), vartype)
+    colnames(table_res) <- c(paste("Not", each), each)
+    
+    fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$VarType == vartype)))
+    print(fish_result)
+    print(ratio_amino$amino_names == each & ratio_amino$vartypes == vartype)
+    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"mean"] = fish_result$estimate
+    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+  }
 }
+
 
 # plots odds ratio with error bar
 ggplot(dfwc.between, aes(x=condition, y=value, group=1)) +
@@ -118,7 +184,8 @@ library(ggplot2)
 # http://stackoverflow.com/questions/13386177/how-to-create-odds-ratio-and-95-ci-plot-in-r
 # http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_%28ggplot2%29/
 # http://stackoverflow.com/questions/14069629/plotting-confidence-intervals
-ggplot(dat, aes(x = pollut, y = or, ymin = lcl, ymax = ucl)) + geom_pointrange(aes(col = factor(lag)), position=position_dodge(width=0.30)) + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("")
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = amino_names, y = mean, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
+ggsave(filename = "tmp.pdf", height=9, width=12) 
 
 # Also odds ratio for each type of amino acids
 # for disease and polymorphism seperately
