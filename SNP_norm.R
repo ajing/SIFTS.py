@@ -5,10 +5,12 @@ protein_annotate<- read.table("./Data/SNPOnStruct_final.txt", sep = "\t", header
 protein_annotate<- read.table("./Data/SNPOnStruct_final_3.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 # remove redundancy in gene level.
 protein_annotate<- read.table("./Data/SNPOnStruct_final_7.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+# add three letter amino acid type
+protein_annotate<- read.table("./Data/SNPOnStruct_final_8.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 
 
 #
-colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "BindingSiteComment", "distance", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
+colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "BindingSiteComment", "distance", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "uniprot_resnam_3d", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
 
 protein_annotate$location = "Core"
 
@@ -122,16 +124,16 @@ print(oddsratio.wald(table_res))
 }
 
 # Disease
-odds_ratio_stat(protein_annotate, "Disease")
+odds_ratio_stat(protein_annotate_withsnp, "Disease")
 
 # Polymorphism
-odds_ratio_stat(protein_annotate, "Polymorphism")
+odds_ratio_stat(protein_annotate_withsnp, "Polymorphism")
 
 # Polymorphism without antigen
-odds_ratio_stat(subset(protein_annotate, !grepl("*histocompatibility antigen*", x = proteinname)), "Polymorphism")
+odds_ratio_stat(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), "Polymorphism")
 
 # Unclassified
-odds_ratio_stat(protein_annotate, "Unclassified")
+odds_ratio_stat(protein_annotate_withsnp, "Unclassified")
 
 # Fisher's Exact Test
 # examine the significance of the association (contingency) between the two kinds of classification.
@@ -145,32 +147,98 @@ fish_result$conf.int
 # the subset I am interested in is subset(protein_annotate, 'location' == "Binding Site")
 p_annotate_bs <- subset(protein_annotate, location == "Binding Site")
 p_annotate_bs <- subset(protein_annotate, location %in% c("Surface", "Binding Site"))
-amino_names <- factor(unique(p_annotate_bs$resnam)[1:20])
-each = as.character(amino_names[1])
-vartype = "Disease"
-vartypes   = c("Disease", "Polymorphism", "Unclassified")
-ratio_amino <- data.frame(merge(amino_names, vartypes, all = TRUE))
-colnames(ratio_amino) <- c("amino_names", "vartypes")
-for (vartype in vartypes) {
-  for (each in amino_names){
-    print(each)
-    print(vartype)
-    each = as.character(each)
-    table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
-                       deal_with_na(as.character(p_annotate_bs$resnam) == each))
-    table_res <- apply(table_res, 1:2, as.numeric)
-    rownames(table_res) <- c(paste("Not", vartype), vartype)
-    colnames(table_res) <- c(paste("Not", each), each)
-    
-    fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$VarType == vartype)))
-    print(fish_result)
-    print(ratio_amino$amino_names == each & ratio_amino$vartypes == vartype)
-    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"mean"] = fish_result$estimate
-    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
-    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
-    ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+aa_preference <- function(p_annotate_bs){
+  amino_names <- factor(unique(p_annotate_bs$resnam)[1:20])
+  each = as.character(amino_names[1])
+  vartype = "Disease"
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(amino_names, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c("amino_names", "vartypes")
+  for (vartype in vartypes) {
+    for (each in amino_names){
+      #print(each)
+      #print(vartype)
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs$resnam) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$VarType == vartype)))
+      print(fish_result)
+      print(ratio_amino$amino_names == each & ratio_amino$vartypes == vartype)
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
   }
+  ratio_amino
 }
+ratio_amino <- aa_preference(protein_annotate_withsnp)
+ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("Surface", "Binding Site")))
+ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("Core")))
+ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("Binding Site")))
+
+
+# for the amino acid it mutated to
+protein_annotate_withsnp_cp <- protein_annotate_withsnp
+protein_annotate_withsnp_cp$resnam[!is.na(protein_annotate_withsnp$AAAfter)] <- protein_annotate_withsnp$AAAfter[!is.na(protein_annotate_withsnp$AAAfter)]
+
+ratio_amino <- aa_preference(subset(protein_annotate_withsnp_cp, location %in% c("Surface", "Binding Site")))
+
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-mean)),]
+ratio_amino$amino_names <- factor(ratio_amino$amino_names, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$amino_names))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = amino_names, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
+ggsave(filename = "tmp.pdf", height=3, width=12) 
+
+
+# odds ratio between binding sites and other surface residues
+aa_loc_preference <- function(p_annotate_bs){
+  amino_names <- factor(unique(p_annotate_bs$resnam)[1:20])
+  each = as.character(amino_names[1])
+  locs   = c("Binding Site")
+  ratio_amino <- data.frame(merge(amino_names, locs, all = TRUE))
+  colnames(ratio_amino) <- c("amino_names", "location")
+  for (loc in locs) {
+    for (each in amino_names){
+      #print(each)
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$location == loc),
+                         deal_with_na(as.character(p_annotate_bs$resnam) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      print(table_res)
+      rownames(table_res) <- c(paste("Not", loc), loc)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$location == loc)))
+      print(fish_result)
+      print(ratio_amino$amino_names == each & ratio_amino$location == loc)
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$location == loc,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$location == loc,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$location == loc,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino$amino_names == each & ratio_amino$location == loc,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+ratio_amino <- aa_loc_preference(subset(protein_annotate_withsnp, location %in% c("Surface", "Binding Site")))
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$amino_names <- factor(ratio_amino$amino_names, levels = as.character(subset(ratio_amino_sort, location == "Binding Site")$amino_names))
+ggplot(ratio_amino, aes(x = amino_names, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(color = I("blue"))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
+ggsave(filename = "tmp.pdf", height=3, width=12) 
+
+
+# how many disease covered
+
+
+# pearson correlation coefficient
+cor(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson") 
+cor.test(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson") 
 
 
 # plots odds ratio with error bar
@@ -180,6 +248,29 @@ ggplot(dfwc.between, aes(x=condition, y=value, group=1)) +
 
 
 library(ggplot2)
+library(reshape2)
+library(scales)
+# frequency distribution
+freq_aa = melt(cbind(prop.table(table(protein_annotate$uniprot_resnam_3d, protein_annotate$VarType), margin = 2),All_Residues = prop.table(table(protein_annotate$uniprot_resnam_3d))))
+colnames(freq_aa) <-  c("AAType", "VarType", "Frequency")
+
+p = ggplot(subset(freq_aa, VarType %in% c("Disease","Polymorphism", "All_Residues") & !(AAType %in% c("UNK","SEC")), drop = T), aes(x = AAType, fill = VarType)) + 
+  geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
+  scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
+ggsave(filename = "freq_aa.pdf", height=3, width=12) 
+
+# freq plot for location
+freq_loc <- melt(prop.table(table(protein_annotate$uniprot_resnam_3d, protein_annotate$location), margin = 2))
+colnames(freq_loc) <-  c("AAType", "Location", "Frequency")
+p = ggplot(subset(freq_loc, !(AAType %in% c("UNK","SEC")), drop = T), aes(x = AAType, fill = Location)) + 
+  geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
+  scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
+ggsave(filename = "freq_loc.pdf", height=3, width=12) 
+
+
+p = ggplot(subset(protein_annotate, VarType == "Disease" & !(uniprot_resnam_3d %in% c("UNK","SEC")), drop = T), aes(x = uniprot_resnam_3d)) + 
+  geom_bar(aes(y = (..count..))) + xlab("") + ylab("Frequency")
+ggsave(filename = "freq_aa.pdf", height=9, width=12) 
 
 # http://stackoverflow.com/questions/13386177/how-to-create-odds-ratio-and-95-ci-plot-in-r
 # http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_%28ggplot2%29/
