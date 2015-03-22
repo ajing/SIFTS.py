@@ -131,6 +131,8 @@ odds_ratio_stat(protein_annotate_withsnp, "Polymorphism")
 
 # Polymorphism without antigen
 odds_ratio_stat(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), "Polymorphism")
+with(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), table(location, vartype))
+
 
 # Unclassified
 odds_ratio_stat(protein_annotate_withsnp, "Unclassified")
@@ -188,7 +190,7 @@ protein_annotate_withsnp_cp$resnam[!is.na(protein_annotate_withsnp$AAAfter)] <- 
 
 ratio_amino <- aa_preference(subset(protein_annotate_withsnp_cp, location %in% c("Surface", "Binding Site")))
 
-
+############################Plot odds ratio######################################
 ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-mean)),]
 ratio_amino$amino_names <- factor(ratio_amino$amino_names, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$amino_names))
 
@@ -234,6 +236,8 @@ ggsave(filename = "tmp.pdf", height=3, width=12)
 
 
 # how many disease covered
+> length(unique(protein_annotate_withsnp$DiseaseName))
+[1] 380
 
 
 # pearson correlation coefficient
@@ -251,18 +255,25 @@ library(ggplot2)
 library(reshape2)
 library(scales)
 # frequency distribution
-freq_aa = melt(cbind(prop.table(table(protein_annotate$uniprot_resnam_3d, protein_annotate$VarType), margin = 2),All_Residues = prop.table(table(protein_annotate$uniprot_resnam_3d))))
+freq_aa = melt(cbind(prop.table(table(protein_annotate_withsnp$uniprot_resnam_3d, protein_annotate_withsnp$VarType), margin = 2),All_Residues = prop.table(table(protein_annotate_withsnp$uniprot_resnam_3d))))
 colnames(freq_aa) <-  c("AAType", "VarType", "Frequency")
+freq_aa = subset(freq_aa, VarType %in% c("Disease","Polymorphism", "All_Residues") & !(AAType %in% c("UNK","SEC")), drop = T)
+freq_aa_sort <- freq_aa[with(freq_aa, order(Frequency)),]
+freq_aa$AAType <- factor(freq_aa$AAType, levels = as.character(subset(freq_aa_sort, VarType == "Disease")$AAType))
 
-p = ggplot(subset(freq_aa, VarType %in% c("Disease","Polymorphism", "All_Residues") & !(AAType %in% c("UNK","SEC")), drop = T), aes(x = AAType, fill = VarType)) + 
+p = ggplot(freq_aa, aes(x = AAType, fill = VarType)) + 
   geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
   scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
 ggsave(filename = "freq_aa.pdf", height=3, width=12) 
 
 # freq plot for location
-freq_loc <- melt(prop.table(table(protein_annotate$uniprot_resnam_3d, protein_annotate$location), margin = 2))
+freq_loc <- melt(prop.table(table(protein_annotate_withsnp$uniprot_resnam_3d, protein_annotate_withsnp$location), margin = 2))
 colnames(freq_loc) <-  c("AAType", "Location", "Frequency")
-p = ggplot(subset(freq_loc, !(AAType %in% c("UNK","SEC")), drop = T), aes(x = AAType, fill = Location)) + 
+freq_loc = subset(freq_loc, !(AAType %in% c("UNK","SEC","NA")), drop = T)
+freq_loc_sort <- freq_aa[with(freq_loc, order(Frequency)),]
+freq_loc$AAType <- factor(freq_loc$AAType, levels = as.character(subset(freq_loc_sort, VarType == "Disease")$AAType))
+
+p = ggplot(freq_loc, aes(x = AAType, fill = Location)) + 
   geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
   scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
 ggsave(filename = "freq_loc.pdf", height=3, width=12) 
@@ -291,3 +302,177 @@ ggplot(dat, aes(x = pollut, y = or, ymin = lcl, ymax = ucl)) + geom_pointrange(a
 
 
 
+
+
+
+
+# Property change after mutation
+protein_annotate_withsnp$type = paste(protein_annotate_withsnp$AABeforeProp, "to", protein_annotate_withsnp$AAAfterProp)
+protein_annotate_onlysnp = subset(protein_annotate_withsnp, !is.na(VarType))
+hydro_prop <- data.frame(AAName = c("LEU", "ILE", "PHE", "TRP", "VAL", "MET", "CYS", "TYR", "ALA", "THR", "GLU", "GLY", "SER", "GLN", "ASP", "ARG", "LYS", "ASN", "HIS", "PRO"), H_Prop = c("Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Hydrophobic", "Hydrophobic", "Hydrophobic", "Neutral", "Neutral","Neutral","Neutral","Neutral","Neutral", "Hydrophilic", "Hydrophilic", "Hydrophilic","Hydrophilic","Hydrophilic"))
+
+
+with(protein_annotate_withsnp, h_prop_change = paste(as.character(hydro_prop[hydro_prop$AAName == AABefore, "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == AAAfter, "H_Prop"])))
+
+
+protein_annotate_onlysnp$h_prop_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(hydro_prop[hydro_prop$AAName == x[["AABefore"]], "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == x[["AAAfter"]], "H_Prop"]))})
+
+
+# odds ratio between hydrophobic property
+aa_prop_preference <- function(p_annotate_bs){
+  prop_change <- factor(unique(p_annotate_bs$h_prop_change))
+  vartype = "Disease"
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(prop_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c("h_prop_change", "vartypes")
+  for (vartype in vartypes) {
+    for (each in prop_change){
+      print(each)
+      print(vartype)
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs$h_prop_change) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$h_prop_change == each), Disease = p_annotate_bs$VarType == vartype)))
+      print(fish_result)
+      print(ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype)
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+ratio_amino <- aa_prop_preference(protein_annotate_onlysnp)
+
+
+############################Plot odds ratio######################################
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$h_prop_change <- factor(ratio_amino$h_prop_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$h_prop_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = h_prop_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
+ggsave(filename = "tmp.pdf", height=4, width=12) 
+
+
+# continue analysis the hydrophibicity
+with(subset(protein_annotate_onlysnp,h_prop_change == "Hydrophobic to Hydrophobic"), table(factor(VarType), factor(AABefore), factor(AAAfter)))
+
+# For hydrophobic to hydrophobic ranking first because all of them are related to mutation from Cysteine to Tyrosine (72 cases) and Tyrosine to Cysteine (60 cases). From CYS to TYR, the protein will lose disulfide bond. From TYR to CYS, the protein will lose an aromatic ring. (add the codon mutate from CYS to TYR and TYR to CYS)
+
+
+########################AA change after mutation##############################
+protein_annotate_onlysnp$aa_change <- paste(protein_annotate_onlysnp$AABefore, "to", protein_annotate_onlysnp$AAAfter)
+# odds ratio between amino acid change
+aa_change_preference <- function(p_annotate_bs, interested_par){
+  aa_change <- factor(unique(p_annotate_bs[,interested_par]))
+  vartype = "Disease"
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(aa_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c(interested_par, "vartypes")
+  for (vartype in vartypes) {
+    for (each in aa_change){
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs[,interested_par]) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs[,interested_par] == each), Disease = p_annotate_bs$VarType == vartype)))
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "aa_change")
+
+############################Plot odds ratio######################################
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$aa_change))
+ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+
+ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+ggsave(filename = "tmp.pdf", height=4, width=12) 
+
+
+
+
+
+
+########## Boostrap
+
+
+########## TYR to CYS or CYS to TYR
+# side chain size size change CYS(135) to TYR(222) and disulphide bond
+> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(DiseaseName)))) 
+[1] 56
+> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(DiseaseName)))) 
+[1] 44
+
+> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(proteinname)))) 
+[1] 58
+> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(proteinname)))) 
+[1] 44
+
+
+########## molecular weight / size of side chain
+sc_v = c(135.0, 163.0, 130.0, 157.0, 198.0, 205.0, 169.0, 136.0, 142.0, 197.0, 106.0, 84.0, 184.0, 164.0, 248.0, 227.0, 142.0, 194.0, 222.0, 188.0)
+#hist(sc_v)
+#sum(sc_v < 170)
+sc_volumn = data.frame(AAName = c("ALA","CYS","ASP","GLU","PHE","GLY","HIS","ILE","LYS","LEU","MET","ASN","PRO","GLN","ARG","SER","THR","VAL","TRP","TYR"), volumn = c(106.0,135.0,163.0,194.0,197.0,84.0,184.0,169.0,205.0,164.0,188.0,157.0,136.0,198.0,248.0,130.0,142.0,142.0,227.0,222.0))
+sc_volumn$volumn.c = cut(sc_volumn$volumn, breaks=3, label = c("small", "median", "large"))
+protein_annotate_onlysnp$volumn_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn.c"]), "to", as.character(sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn.c"]))})
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "volumn_change")
+
+############################Plot odds ratio######################################
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
+ggsave(filename = "tmp.pdf", height=4, width=12) 
+
+
+########### more analysis about size
+> with(subset(protein_annotate_onlysnp, volumn_change %in% c("large to small", "small to large")), table(aa_change))
+aa_change
+ALA to GLU ALA to PHE ARG to CYS ARG to GLY ARG to PRO ARG to SER CYS to ARG 
+25          3        149         87         73         42         56 
+CYS to PHE CYS to TRP CYS to TYR GLN to PRO GLU to ALA GLU to GLY GLU to PRO 
+30         19         75         19         32         50          1 
+GLY to ARG GLY to GLU GLY to LYS GLY to PHE GLY to TRP LYS to GLY PHE to CYS 
+186         82          1          1         14          1         28 
+PHE to GLY PHE to SER PRO to ARG PRO to GLN PRO to PHE SER to ARG SER to LYS 
+1         51         54          9          5         46          1 
+SER to PHE SER to TRP SER to TYR TRP to CYS TRP to GLY TRP to SER TYR to CYS 
+52          5         19         19         13          9         88 
+TYR to GLY TYR to SER 
+1         21 
+
+
+
+
+################################## Blosum62 analysis##############################
+library(seqinr)
+library(peplib)
+library(reshape2)
+
+data(blosum62)
+blosum_melt<-melt(blosum62)
+blosum_melt <- subset(blosum_melt, !(Var1 %in% c("GAP", "B", "Z", "X")) & !(Var2 %in% c("GAP", "B", "Z", "X")))
+blosum_melt$volumn_change <- apply(blosum_melt, 1, function(x) { alist = c(as.character(sc_volumn[sc_volumn$AAName == toupper(aaa(x[["Var1"]])), "volumn.c"]), as.character(sc_volumn[sc_volumn$AAName == toupper(aaa(x[["Var2"]])), "volumn.c"])); alist = sort(alist); print(alist); paste(alist[1], "to", alist[2])})
+blosum_melt$value.mean = apply(blosum_melt, 1, function(x){mean(subset(blosum_melt, volumn_change==x[["volumn_change"]])$value)})
+
+ggplot(blosum_melt, aes(x=value)) + geom_histogram() + geom_vline(aes(xintercept=value.mean),linetype="dashed", size=1, color = "red") + facet_grid(volumn_change~.)
+
+
+########################## Get the table after removing the antigen protein
+no_antigen_table = with(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), table(location, VarType))
