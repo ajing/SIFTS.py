@@ -487,9 +487,6 @@ ggplot(blosum_melt, aes(x=value)) + geom_histogram() + geom_vline(aes(xintercept
 ########################## Get the table after removing the antigen protein
 no_antigen_table = with(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), table(location, VarType))
 
-
-
-
 ########################## Linear Model
 # the size of side chain sc_volumn
 # the hydrophobic porperty, 

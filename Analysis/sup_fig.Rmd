@@ -1,0 +1,71 @@
+---
+title: "sup_fig"
+author: "ajing"
+date: "Tuesday, March 24, 2015"
+output: html_document
+---
+
+
+```{r}
+# library
+library(ggplot2)
+
+# add three letter amino acid type
+protein_annotate<- read.table("./Data/SNPOnStruct_final_8.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "BindingSiteComment", "distance", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "uniprot_resnam_3d", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
+
+protein_annotate$location = "Core"
+
+#MAX_ACC["GLY"] = 84.0
+protein_annotate$location[protein_annotate$ssa > 5] = "Surface"
+
+protein_annotate[ which(protein_annotate$distance <= 4.0 | !is.na(protein_annotate$BindingSiteComment)),'location'] = "Binding Site"
+
+protein_annotate_withsnp = subset(protein_annotate, UniProtID %in% factor(unique(subset(protein_annotate, !is.na(VarType))$UniProtID)))
+
+protein_annotate_onlysnp = subset(protein_annotate_withsnp, !is.na(VarType))
+```
+
+Create aa_change_preference function
+```{r, echo=FALSE}
+aa_change_preference <- function(p_annotate_bs, interested_par){
+  aa_change <- factor(unique(p_annotate_bs[,interested_par]))
+  vartype = "Disease"
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(aa_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c(interested_par, "vartypes")
+  for (vartype in vartypes) {
+    for (each in aa_change){
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs[,interested_par]) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs[,interested_par] == each), Disease = p_annotate_bs$VarType == vartype)))
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+
+```
+
+```{r}
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "aa_change")
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$aa_change))
+ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+
+ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
