@@ -183,6 +183,8 @@ ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("S
 ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("Core")))
 ratio_amino <- aa_preference(subset(protein_annotate_withsnp, location %in% c("Binding Site")))
 
+# write to table
+write.csv(ratio_amino, file = "tmp.csv")
 
 # for the amino acid it mutated to
 protein_annotate_withsnp_cp <- protein_annotate_withsnp
@@ -309,11 +311,12 @@ ggplot(dat, aes(x = pollut, y = or, ymin = lcl, ymax = ucl)) + geom_pointrange(a
 # Property change after mutation
 protein_annotate_withsnp$type = paste(protein_annotate_withsnp$AABeforeProp, "to", protein_annotate_withsnp$AAAfterProp)
 protein_annotate_onlysnp = subset(protein_annotate_withsnp, !is.na(VarType))
+# PH = 2
 hydro_prop <- data.frame(AAName = c("LEU", "ILE", "PHE", "TRP", "VAL", "MET", "CYS", "TYR", "ALA", "THR", "GLU", "GLY", "SER", "GLN", "ASP", "ARG", "LYS", "ASN", "HIS", "PRO"), H_Prop = c("Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Hydrophobic", "Hydrophobic", "Hydrophobic", "Neutral", "Neutral","Neutral","Neutral","Neutral","Neutral", "Hydrophilic", "Hydrophilic", "Hydrophilic","Hydrophilic","Hydrophilic"))
+# PH = 7
+hydro_prop <- data.frame(AAName = c("LEU", "ILE", "PHE", "TRP", "VAL", "MET", "CYS", "TYR", "ALA", "THR", "GLU", "GLY", "SER", "GLN", "ASP", "ARG", "LYS", "ASN", "HIS", "PRO"), H_Prop = c("Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Hydrophobic", "Hydrophobic", "Hydrophobic", "Neutral", "Neutral","Neutral","Neutral","Neutral","Hydrophilic", "Hydrophilic", "Hydrophilic", "Hydrophilic","Hydrophilic","Hydrophilic"))
 
-
-with(protein_annotate_withsnp, h_prop_change = paste(as.character(hydro_prop[hydro_prop$AAName == AABefore, "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == AAAfter, "H_Prop"])))
-
+#protein_annotate_withsnp$h_prop_change <- apply(protein_annotate_withsnp, 1, function(x) { paste(as.character(hydro_prop[hydro_prop$AAName == x[["AABefore"]], "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == x[["AAAfter"]], "H_Prop"]))})
 
 protein_annotate_onlysnp$h_prop_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(hydro_prop[hydro_prop$AAName == x[["AABefore"]], "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == x[["AAAfter"]], "H_Prop"]))})
 
@@ -347,6 +350,7 @@ aa_prop_preference <- function(p_annotate_bs){
   }
   ratio_amino
 }
+# why protein_annotate_onlysnp, odds ratio for only changes
 ratio_amino <- aa_prop_preference(protein_annotate_onlysnp)
 
 
@@ -433,6 +437,12 @@ sc_volumn$volumn.c = cut(sc_volumn$volumn, breaks=3, label = c("small", "median"
 protein_annotate_onlysnp$volumn_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn.c"]), "to", as.character(sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn.c"]))})
 ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "volumn_change")
 
+# save sc_volumn to file
+write.csv(sc_volumn[order(sc_volumn$volumn),], file = "tmp.csv")
+
+# for only snps in binding site
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location == "Binding Site"), "volumn_change")
+
 ############################Plot odds ratio######################################
 ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
 ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
@@ -476,3 +486,14 @@ ggplot(blosum_melt, aes(x=value)) + geom_histogram() + geom_vline(aes(xintercept
 
 ########################## Get the table after removing the antigen protein
 no_antigen_table = with(subset(protein_annotate_withsnp, !grepl("*histocompatibility antigen*", x = proteinname)), table(location, VarType))
+
+
+
+
+########################## Linear Model
+# the size of side chain sc_volumn
+# the hydrophobic porperty, 
+hydro_index <- data.frame(AAName = c("PHE", "ILE", "TRP", "LEU", "VAL", "MET", "TYR", "CYS", "ALA", "THR", "HIS", "GLY", "SER", "GLN", "ARG", "LYS", "ASN", "GLU", "PRO", "ASP"), index_num = c( 100, 99, 97, 97, 76, 74, 63, 49, 41, 13, 8, 0, -5, -10, -14, -23, -28, -31, -46, -55))
+protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, function(x) { hydro_index[hydro_index$AAName == x[["AABefore"]], "index_num"] - hydro_index[hydro_index$AAName == x[["AAAfter"]], "index_num"]})
+protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
+protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
