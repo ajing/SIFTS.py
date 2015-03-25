@@ -15,15 +15,182 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+[Previously saved workspace restored]
+
 > require(knitr) # required for knitting from rmd to md
 Loading required package: knitr
 > require(markdown) # required for md to html
 Loading required package: markdown
-> knit('test.rmd', 'test.md') # creates md file
-Error in readLines(if (is.character(input2)) { : 
-  cannot open the connection
-Calls: knit -> readLines
-In addition: Warning message:
-In readLines(if (is.character(input2)) { :
-  cannot open file 'test.rmd': No such file or directory
-Execution halted
+> knit('sup_fig.Rmd', 'test.md') # creates md file
+
+
+processing file: sup_fig.Rmd
+  |                                                                         |                                                                 |   0%  |                                                                         |..                                                               |   3%
+  ordinary text without R code
+
+  |                                                                         |....                                                             |   6%
+label: unnamed-chunk-1 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |......                                                           |   9%
+  ordinary text without R code
+
+  |                                                                         |........                                                         |  12%
+label: unnamed-chunk-2 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |..........                                                       |  16%
+  ordinary text without R code
+
+  |                                                                         |............                                                     |  19%
+label: unnamed-chunk-3 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |..............                                                   |  22%
+  ordinary text without R code
+
+  |                                                                         |................                                                 |  25%
+label: unnamed-chunk-4 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |..................                                               |  28%
+  ordinary text without R code
+
+  |                                                                         |....................                                             |  31%
+label: unnamed-chunk-5 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |......................                                           |  34%
+  ordinary text without R code
+
+  |                                                                         |........................                                         |  38%
+label: unnamed-chunk-6 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |..........................                                       |  41%
+  ordinary text without R code
+
+  |                                                                         |............................                                     |  44%
+label: unnamed-chunk-7 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |..............................                                   |  47%
+  ordinary text without R code
+
+  |                                                                         |................................                                 |  50%
+label: unnamed-chunk-8 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |...................................                              |  53%
+  ordinary text without R code
+
+  |                                                                         |.....................................                            |  56%
+label: unnamed-chunk-9 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |.......................................                          |  59%
+  ordinary text without R code
+
+  |                                                                         |.........................................                        |  62%
+label: unnamed-chunk-10 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |...........................................                      |  66%
+  ordinary text without R code
+
+  |                                                                         |.............................................                    |  69%
+label: unnamed-chunk-11 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |...............................................                  |  72%
+  ordinary text without R code
+
+  |                                                                         |.................................................                |  75%
+label: unnamed-chunk-12 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |...................................................              |  78%
+  ordinary text without R code
+
+  |                                                                         |.....................................................            |  81%
+label: unnamed-chunk-13 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |.......................................................          |  84%
+  ordinary text without R code
+
+  |                                                                         |.........................................................        |  88%
+label: unnamed-chunk-14 (with options) 
+List of 4
+ $ echo      : logi FALSE
+ $ fig.width : num 12
+ $ fig.height: num 3
+ $ tidy      : logi TRUE
+
+  |                                                                         |...........................................................      |  91%
+  ordinary text without R code
+
+  |                                                                       1427297487628	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+ogi FALSE
+
+  |                                                                         |...............................................................  |  97%
+  ordinary text without R code
+
+  |                                                                         |.................................................................| 100%
+label: unnamed-chunk-16 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+
+output file: test.md
+
+[1] "test.md"
+> markdownToHTML('test.md', 'test.html') # creates html file
+> browseURL(paste('file://', file.path(getwd(),'test.html'), sep='')) # open file in browser
+> 
+> proc.time()
+   user  system elapsed 
+ 84.971   5.186  90.275 

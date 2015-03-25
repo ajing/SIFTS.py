@@ -6,12 +6,16 @@ output: html_document
 ---
 
 
-```{r}
+#```{r setup, include=FALSE}
+#opts_chunk$set(dev = 'pdf')
+#```
+
+```{r echo=FALSE}
 # library
 library(ggplot2)
 
 # add three letter amino acid type
-protein_annotate<- read.table("./Data/SNPOnStruct_final_8.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+protein_annotate<- read.table("../Data/SNPOnStruct_final_8.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 colnames(protein_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "BindingSiteComment", "distance", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "uniprot_resnam_3d", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
 
 protein_annotate$location = "Core"
@@ -24,10 +28,20 @@ protein_annotate[ which(protein_annotate$distance <= 4.0 | !is.na(protein_annota
 protein_annotate_withsnp = subset(protein_annotate, UniProtID %in% factor(unique(subset(protein_annotate, !is.na(VarType))$UniProtID)))
 
 protein_annotate_onlysnp = subset(protein_annotate_withsnp, !is.na(VarType))
+
+#summary(protein_annotate_withsnp)
+#summary(protein_annotate_onlysnp)
 ```
 
 Create aa_change_preference function
 ```{r, echo=FALSE}
+
+deal_with_na <- function(x) {
+  x[is.na(x)] = F
+  factor(x)
+}
+
+
 aa_change_preference <- function(p_annotate_bs, interested_par){
   aa_change <- factor(unique(p_annotate_bs[,interested_par]))
   vartype = "Disease"
@@ -42,7 +56,7 @@ aa_change_preference <- function(p_annotate_bs, interested_par){
       table_res <- apply(table_res, 1:2, as.numeric)
       rownames(table_res) <- c(paste("Not", vartype), vartype)
       colnames(table_res) <- c(paste("Not", each), each)
-      
+
       fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs[,interested_par] == each), Disease = p_annotate_bs$VarType == vartype)))
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
@@ -55,7 +69,11 @@ aa_change_preference <- function(p_annotate_bs, interested_par){
 
 ```
 
-```{r}
+# Amino acid change after mutation
+## All locations
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+protein_annotate_onlysnp$aa_change <- paste(protein_annotate_onlysnp$AABefore, "to", protein_annotate_onlysnp$AAAfter)
+
 ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "aa_change")
 
 ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
@@ -67,5 +85,173 @@ ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
 ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
 ```
 
+##On surface (with binding sites)
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Surface", "Binding Site")), "aa_change")
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$aa_change))
+ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+```
+
+##On binding sites
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site")), "aa_change")
+
+summary(ratio_amino)
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$aa_change))
+ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+```
+
+In protein core
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site")), "aa_change")
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$aa_change))
+ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+```
+
+# Size change after mutation
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+sc_volumn = data.frame(AAName = c("ALA","CYS","ASP","GLU","PHE","GLY","HIS","ILE","LYS","LEU","MET","ASN","PRO","GLN","ARG","SER","THR","VAL","TRP","TYR"), volumn = c(106.0,135.0,163.0,194.0,197.0,84.0,184.0,169.0,205.0,164.0,188.0,157.0,136.0,198.0,248.0,130.0,142.0,142.0,227.0,222.0))
+sc_volumn$volumn.c = cut(sc_volumn$volumn, breaks=3, label = c("small", "median", "large"))
+protein_annotate_onlysnp$volumn_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn.c"]), "to", as.character(sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn.c"]))})
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "volumn_change")
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
+```
+
+## For protein core
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Core")), "volumn_change")
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
+```
+
+## For surface (with binding site)
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Surface", "Binding Site")), "volumn_change")
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
+```
+
+## For binding site
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site")), "volumn_change")
+
+ratio_amino
+
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
+```
+
+
+
+
+# hydrophibicity change after mutation
+```{r echo=FALSE}
+hydro_prop <- data.frame(AAName = c("LEU", "ILE", "PHE", "TRP", "VAL", "MET", "CYS", "TYR", "ALA", "THR", "GLU", "GLY", "SER", "GLN", "ASP", "ARG", "LYS", "ASN", "HIS", "PRO"), H_Prop = c("Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Very Hydrophobic", "Hydrophobic", "Hydrophobic", "Hydrophobic", "Neutral", "Neutral","Neutral","Neutral","Neutral","Hydrophilic", "Hydrophilic", "Hydrophilic", "Hydrophilic","Hydrophilic","Hydrophilic"))
+protein_annotate_onlysnp$h_prop_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(hydro_prop[hydro_prop$AAName == x[["AABefore"]], "H_Prop"]), "to", as.character(hydro_prop[hydro_prop$AAName == x[["AAAfter"]], "H_Prop"]))})
+
+# odds ratio between hydrophobic property
+aa_prop_preference <- function(p_annotate_bs){
+  prop_change <- factor(unique(p_annotate_bs$h_prop_change))
+  vartype = "Disease"
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(prop_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c("h_prop_change", "vartypes")
+  for (vartype in vartypes) {
+    for (each in prop_change){
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs$h_prop_change) == each))
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$h_prop_change == each), Disease = p_annotate_bs$VarType == vartype)))
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+# why protein_annotate_onlysnp, odds ratio for only changes
+```
+
+## For all locations
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_prop_preference(protein_annotate_onlysnp)
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$h_prop_change <- factor(ratio_amino$h_prop_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$h_prop_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = h_prop_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
+```
+
+## For surface
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_prop_preference(subset(protein_annotate_onlysnp, location %in% c("Surface", "Binding Site")))
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$h_prop_change <- factor(ratio_amino$h_prop_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$h_prop_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = h_prop_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
+```
+
+## For binding site only
+```{r echo=FALSE, fig.width=12, fig.height=3, tidy=TRUE}
+ratio_amino <- aa_prop_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site")))
+ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+ratio_amino$h_prop_change <- factor(ratio_amino$h_prop_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$h_prop_change))
+
+ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = h_prop_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
+```
+
+
+# Linear model
+```{r echo=FALSE}
+
+hydro_index <- data.frame(AAName = c("PHE", "ILE", "TRP", "LEU", "VAL", "MET", "TYR", "CYS", "ALA", "THR", "HIS", "GLY", "SER", "GLN", "ARG", "LYS", "ASN", "GLU", "PRO", "ASP"), index_num = c( 100, 99, 97, 97, 76, 74, 63, 49, 41, 13, 8, 0, -5, -10, -14, -23, -28, -31, -46, -55))
+protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, function(x) { hydro_index[hydro_index$AAName == x[["AABefore"]], "index_num"] - hydro_index[hydro_index$AAName == x[["AAAfter"]], "index_num"]})
+protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
+protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
+
+model = with(protein_annotate_onlysnp, glm(is_disease ~ abs(hydro_change) + abs(size_change), family = binomial(logit)))
+summary(model)
+pred_result = predict(model, protein_annotate_onlysnp)
+summary(pred_result)
+sum((pred_result >= 0 ) == protein_annotate_onlysnp$is_disease) / length(pred_result)
+sum((pred_result < 0 ) == protein_annotate_onlysnp$is_disease) / length(pred_result)
+```
+
+## With only disease and polymorphism
+```{r echo=FALSE}
+model = with(subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism")), glm(is_disease ~ abs(hydro_change) + abs(size_change), family = binomial(logit)))
+summary(model)
+pred_result = predict(model, subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism")))
+sum((pred_result >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism"))$is_disease) / length(pred_result)
+```
