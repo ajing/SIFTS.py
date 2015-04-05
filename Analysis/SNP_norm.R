@@ -494,3 +494,102 @@ hydro_index <- data.frame(AAName = c("PHE", "ILE", "TRP", "LEU", "VAL", "MET", "
 protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, function(x) { hydro_index[hydro_index$AAName == x[["AABefore"]], "index_num"] - hydro_index[hydro_index$AAName == x[["AAAfter"]], "index_num"]})
 protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
 protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
+
+
+########################## Gene enrichment analysis
+get_gene_list <- function(genelist) {
+  uniq_gene_1 <- unique(genelist)
+  uniq_gene_2 <- c()
+  for (i in 1:length(uniq_gene_1)) {
+    uniq_gene_2 = c(uniq_gene_2, strsplit(as.character(uniq_gene_1[i]),',',fixed=TRUE)[[1]])
+  }
+  uniq_gene_2 = unique(as.character(uniq_gene_2)[!is.na(uniq_gene_2)])
+}
+gene_disease <- get_gene_list(subset(protein_annotate_withsnp, VarType == "Disease")$gene_name_acc)
+gene_disease_bs <- get_gene_list(subset(protein_annotate_withsnp, VarType == "Disease" & location == "Binding Site")$gene_name_acc)
+gene_disease_core <- get_gene_list(subset(protein_annotate_withsnp, VarType == "Disease" & location == "Core")$gene_name_acc)
+gene_all <- get_gene_list(protein_annotate_withsnp$gene_name_acc)
+
+gene_polymor <- get_gene_list(subset(protein_annotate_withsnp, VarType == "Polymorphism")$gene_name_acc)
+gene_polymor_bs <- get_gene_list(subset(protein_annotate_withsnp, VarType == "Polymorphism" & location == "Binding Site")$gene_name_acc)
+
+write(gene_all, file = "gene_all.txt", sep = "\n")
+write(gene_disease, file = "gene_disease.txt", sep = "\n")
+write(gene_disease_bs, file = "gene_disease_bs.txt", sep = "\n")
+write(gene_disease_core, file = "gene_disease_core.txt", sep = "\n")
+
+write(gene_polymor,  file = "gene_polymor.txt", sep = "\n")
+write(gene_polymor_bs,  file = "gene_polymor_bs.txt", sep = "\n")
+
+write(gene_polymor_bs,  file = "gene_polymor_bs.txt", sep = "\n")
+
+
+
+################ more anlaysis for drug resistant
+
+no_antigen_table = with(subset(protein_annotate_withsnp, !grepl("*transporter*", x = proteinname)), table(location, VarType))
+
+
+################ for popular ligand in disease SNP binding site
+tmp <- table(factor(subset(protein_annotate_onlysnp, location == "Binding Site" & VarType == "Disease", select = c("ligandName"))$ligandName))
+sort(tmp)
+
+
+################  Drug related information
+drug_gene = read.table("./Data/drugbank_genelist.csv", header = F)
+dim(subset(protein_annotate_onlysnp, location == "Binding Site" & VarType == "Disease" & genename %in% drug_gene))
+
+
+
+################ Graph based analysis
+ligand_smile = read.csv("./Data/ligand_smile.txt", sep="," , header = F)
+names(ligand_smile) <- c("ligname", "smiles")
+
+unique_ligand <- count(data.frame(subset(protein_annotate_onlysnp, !is.na(ligandName), select = c("VarType", "ligandName", "location"))))
+unique_ligand <- merge(unique_ligand, ligand_smile, by.x = "ligandName", by.y = "ligname")
+write.table(unique_ligand, file = "./Data/ligand_net.txt", sep="\t", quote = F, row.names = F)
+
+
+protein_ligand <- count(data.frame(subset(protein_annotate_onlysnp, !is.na(ligandName), select = c("UniProtID", "ligandName"))))
+subset(protein_annotate_onlysnp, VarType == "Disease" & !is.na(ligandName), select = c("UniProtID", "ligandName"))
+write.table(protein_ligand, file = "./Data/prolig_net.txt")
+
+poligand = read.csv("./Data/poly_ligand.txt", sep="\t" , header = F)
+names(poligand) <- c("UniProtID", "uniprot_resnum", "VarType", "ligcount")
+poligand$ligcount.mean = apply(poligand, 1, function(x){mean(subset(poligand, VarType==x[["VarType"]])$ligcount)})
+poligand$total_res = apply(poligand, 1, function(x){length(subset(poligand, VarType==x[["VarType"]])$ligcount)})
+
+
+ggplot(poligand, aes(x = ligcount, color = VarType)) + scale_x_log10() + geom_density() + geom_vline(aes(xintercept=ligcount.mean),linetype="dashed", size=1, color = "red") 
+ggsave(filename = "tmp.pdf")
+
+pdf("tmp.pdf")
+with(poligand, boxplot(ligcount~VarType,notch=T, log = "y"))
+dev.off()
+
+ggplot(data=poligand, aes(x=VarType, y=ligcount, fill=VarType))  + scale_fill_discrete(guide = FALSE) + geom_boxplot(notch = T) + geom_point(aes(y = ligcount.mean), shape = 18, size = 3) + geom_text(aes(label = paste("mean = ", round(ligcount.mean, digits = 2), ", n = ", total_res, sep = ""), y = ligcount.mean + 1)) + scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + annotation_logticks(sides = "l") + xlab("SNV type") + ylab("Number of unique ligands")
+ggsave(filename = "tmp.pdf")
+
+with(poligand, wilcox.test(ligcount[VarType == "Disease"], ligcount[VarType == "Polymorphism"]))
+with(poligand, wilcox.test(ligcount[VarType == "Polymorphism"], ligcount[VarType == "Unclassified"]))
+
+
+
+####################### Central residues and peripheral residue
+protein_annotate_withsnp_site <- subset(protein_annotate_withsnp, location == "Binding Site")
+pro_lig_count <- read.table("./Data/pro_lig_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+pro_res_lig <- read.table("./Data/pro_res_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+colnames(pro_lig_count) <- c("UniProtID", "ligcount")
+colnames(pro_res_lig) <- c("UniProtID", "uniprot_resnum", "ligcount_res")
+protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_lig_count, all = TRUE)
+protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_res_lig, all = TRUE)
+
+protien_annotate_withsnp_site$site_annotat <- with(protien_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .75)])
+
+fish_bs <- function(p_annotate_bs, vartype, loc){
+  fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$VarType == vartype, Central = p_annotate_bs$site_annotat == loc)))
+  fish_result
+}
+fish_result <- fish_bs(protein_annotate_withsnp_site, "Disease", "center")
+fish_result <- fish_bs(protein_annotate_withsnp_site, "Polymorphism", "center")
+fish_result <- fish_bs(protein_annotate_withsnp_site, "Unclassified", "center")
