@@ -433,7 +433,7 @@ sc_v = c(135.0, 163.0, 130.0, 157.0, 198.0, 205.0, 169.0, 136.0, 142.0, 197.0, 1
 #hist(sc_v)
 #sum(sc_v < 170)
 sc_volumn = data.frame(AAName = c("ALA","CYS","ASP","GLU","PHE","GLY","HIS","ILE","LYS","LEU","MET","ASN","PRO","GLN","ARG","SER","THR","VAL","TRP","TYR"), volumn = c(106.0,135.0,163.0,194.0,197.0,84.0,184.0,169.0,205.0,164.0,188.0,157.0,136.0,198.0,248.0,130.0,142.0,142.0,227.0,222.0))
-sc_volumn$volumn.c = cut(sc_volumn$volumn, breaks=3, label = c("small", "median", "large"))
+sc_volumn$volumn.c = cut(sc_volumn$volumn, breaks=3, label = c("small", "medium", "large"))
 protein_annotate_onlysnp$volumn_change <- apply(protein_annotate_onlysnp, 1, function(x) { paste(as.character(sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn.c"]), "to", as.character(sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn.c"]))})
 ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "volumn_change")
 
@@ -494,6 +494,36 @@ hydro_index <- data.frame(AAName = c("PHE", "ILE", "TRP", "LEU", "VAL", "MET", "
 protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, function(x) { hydro_index[hydro_index$AAName == x[["AABefore"]], "index_num"] - hydro_index[hydro_index$AAName == x[["AAAfter"]], "index_num"]})
 protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
 protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
+
+model <- lm(is_disease ~ hydro_change + size_change + location, data = protein_annotate_onlysnp)
+
+model <- lm(is_disease ~ hydro_change:loc_factor, data = protein_annotate_onlysnp)
+summary(model)
+pre_result <- predict(model)
+
+library('e1071')
+obj <- tune.svm(is_disease ~ ., data = subset(train_data, select = c("is_disease", "hydro_change", "size_change", "location")), gama = 2^(-10:1), cost = 2^(2:10))
+model <- obj$best.model
+pre_result_train <- predict(model, subset(train_data,select = Open.Date:P37))
+svm_se = sqrt(sum((pre_result_train - train_data$revenue)^2)/ length(train_data$revenue))
+svm_se
+
+
+#AUC
+install.packages("ROCR")
+library(ROCR)
+
+pred <- prediction(pre_result, protein_annotate_onlysnp$is_disease)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+pdf("tmp.pdf")
+plot(perf, col=rainbow(10))
+abline(a = 0, b = 1)
+dev.off()
+
+# load data from SIFT
+SIFT_score <- read.table("./Data/siftscore.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+colnames(SIFT_Score) 
+
 
 
 ########################## Gene enrichment analysis
@@ -578,18 +608,166 @@ with(poligand, wilcox.test(ligcount[VarType == "Polymorphism"], ligcount[VarType
 ####################### Central residues and peripheral residue
 protein_annotate_withsnp_site <- subset(protein_annotate_withsnp, location == "Binding Site")
 pro_lig_count <- read.table("./Data/pro_lig_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
-pro_res_lig <- read.table("./Data/pro_res_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+pro_res_lig <- read.table("./Data/pro_res_count_withsnp.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 colnames(pro_lig_count) <- c("UniProtID", "ligcount")
 colnames(pro_res_lig) <- c("UniProtID", "uniprot_resnum", "ligcount_res")
-protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_lig_count, all = TRUE)
-protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_res_lig, all = TRUE)
+protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_lig_count, all.x = TRUE)
+protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_res_lig, all.x = TRUE)
 
-protien_annotate_withsnp_site$site_annotat <- with(protien_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .75)])
+protein_annotate_withsnp_site$site_annotat <- with(protein_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .75)])
 
 fish_bs <- function(p_annotate_bs, vartype, loc){
   fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$VarType == vartype, Central = p_annotate_bs$site_annotat == loc)))
   fish_result
 }
-fish_result <- fish_bs(protein_annotate_withsnp_site, "Disease", "center")
-fish_result <- fish_bs(protein_annotate_withsnp_site, "Polymorphism", "center")
-fish_result <- fish_bs(protein_annotate_withsnp_site, "Unclassified", "center")
+fish_bs(protein_annotate_withsnp_site, "Disease", "center")
+fish_bs(protein_annotate_withsnp_site, "Polymorphism", "center")
+fish_bs(protein_annotate_withsnp_site, "Unclassified", "center")
+
+
+# allsoteric sites or other sites
+allo_res <- read.table("./Data/pro_res_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+colnames(allo_res) <- c("UniProtID", "uniprot_resnum")
+allo_res$allosite = "Allo"
+allo_site <- subset(protein_annotate_withsnp, as.character(UniProtID) %in% as.character(unique(allo_res$UniProtID)))
+allo_site <- merge(allo_site, allo_res, all.x = T)
+allo_site[is.na(allo_site$allosite), "allosite"] <- allo_site[is.na(allo_site$allosite), "location"]
+allo_site$allosite <- factor(allo_site$allosite)
+fish_bs <- function(p_annotate_bs, vartype, loc){
+  fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$VarType == vartype, Allosite = p_annotate_bs$allosite == loc)))
+  fish_result
+}
+fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Disease", "Allo")
+fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Polymorphism", "Allo")
+fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Unclassified", "Allo")
+
+> length(unique(subset(allo_site, allosite %in% c("Binding Site", "Allo"))$UniProtID))
+[1] 27
+
+102 PDBs
+
+> sum(!is.na(subset(allo_site,select = VarType)))
+[1] 964
+
+
+> with(allo_site, table(factor(proteinname)))                                                                                                                                                                    
+"
+Androgen receptor                                                                                                                                   
+304                                                                                                                                   
+Antithrombin-III                                                                                                                                   
+436                                                                                                                                   
+Coagulation factor IX                                                                                                                                   
+307                                                                                                                                   
+Cyclin-dependent kinase 2                                                                                                                                   
+298                                                                                                                                   
+Cytosolic purine 5'-nucleotidase                                                                                                                                   
+470                                                                                                                                   
+Dihydrofolate reductase                                                                                                                                   
+186                                                                                                                                   
+Dual specificity mitogen-activated protein kinase kinase 1                                                                                                                                   
+316                                                                                                                                   
+Farnesyl pyrophosphate synthase                                                                                                                                   
+346                                                                                                                                   
+Fructose-1,6-bisphosphatase 1                                                                                                                                   
+319                                                                                                                                   
+Glucokinase                                                                                                                                   
+461                                                                                                                                   
+Glutaminase kidney isoform, mitochondrial                                                                                                                                   
+412                                                                                                                                   
+Glycogen phosphorylase, liver form                                                                                                                                   
+834                                                                                                                                   
+Glycogen phosphorylase, muscle form                                                                                                                                   
+821                                                                                                                                   
+Hemoglobin subunit alpha                                                                                                                                   
+191                                                                                                                                   
+Hemoglobin subunit beta                                                                                                                                   
+273                                                                                                                                   
+Hexokinase-1                                                                                                                                   
+903                                                                                                                                   
+Integrin alpha-L                                                                                                                                   
+184                                                                                                                                   
+Kinesin-like protein KIF11                                                                                                                                   
+351                                                                                                                                   
+Leukotriene A-4 hydrolase                                                                                                                                   
+610                                                                                                                                   
+Mitogen-activated protein kinase 14                                                                                                                                   
+359                                                                                                                                   
+NAD-dependent malic enzyme, mitochondrial                                                                                                                                   
+554                                                                                                                                   
+Ribose-phosphate pyrophosphokinase 1                                                                                                                                   
+309                                                                                                                                   
+Serine/threonine-protein kinase Chk1                                                                                                                                   
+279                                                                                                                                   
+Transthyretin                                                                                                                                   
+156                                                                                                                                   
+Vitamin D3 receptor                                                                                                                                   
+255                                                                                                                                   
+[Pyruvate dehydrogenase (acetyl-transferring)] kinase isozyme 2, mitochondrial                                                                                                                                   
+374                                                                                                                                   
+cAMP and cAMP-inhibited cGMP 3',5'-cyclic phosphodiesterase 10A                                                                                                                                   
+505 
+"
+
+[1] "HIS to ALA"
+[1] "Disease"
+
+## Bootstrap for confidence interval
+library(boot)
+aa_change_preference <- function(p_annotate_bs, interested_par){
+  aa_change <- factor(unique(p_annotate_bs[,interested_par]))
+  vartypes   = c("Disease", "Polymorphism", "Unclassified")
+  ratio_amino <- data.frame(merge(aa_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c(interested_par, "vartypes")
+  print(ratio_amino)
+  for (vartype in vartypes) {
+    for (each in aa_change){
+      
+      cannot_proc <- F
+      
+      oddsratio_fun <- function(d, i) {
+        or <- fisher.test(table(data.frame(residueName = (d[i,interested_par] == each), Disease = d[i, "VarType"] == vartype)))$estimate[[1]]
+        or
+      }
+      
+      oddsboot <- tryCatch({
+        boot(p_annotate_bs, oddsratio_fun, R = 1000, parallel = "multicore")
+        
+      }, error = function(err) { cannot_proc <<- T })
+      
+      oddsci   <- tryCatch({
+        boot.ci(oddsboot, type = "norm")
+      }, error = function(err) { cannot_proc <<- T })
+      
+      if (cannot_proc) {
+        next
+      }
+      
+      print(oddsci)
+      
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = oddsci$t0
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = oddsci$normal[2]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_up"] = oddsci$normal[3]
+    }
+  }
+  
+  print(ratio_amino)
+  # plot the graph
+  ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+  ratio_amino[, interested_par] <- factor(ratio_amino[, interested_par], levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")[, interested_par]))
+  
+  # for aa_change
+  ratio_amino <- subset(ratio_amino, (ci_low - 1) * (ci_up - 1) > 0 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
+  common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
+  ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+  
+  ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes_string(x = interested_par, y = "estimate", ymin = "ci_low", ymax = "ci_up")) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()  
+  ggsave(filename = "tmp.pdf", height=3, width=12)
+  
+  ratio_amino
+}
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "uniprot_resnam_3d")
+
+ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site", "Surface")), "uniprot_resnam_3d")
+
+ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "aa_change")
+
