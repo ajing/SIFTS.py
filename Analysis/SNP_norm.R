@@ -200,6 +200,7 @@ ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = 
 ggsave(filename = "tmp.pdf", height=3, width=12) 
 
 
+
 # odds ratio between binding sites and other surface residues
 aa_loc_preference <- function(p_annotate_bs){
   amino_names <- factor(unique(p_annotate_bs$resnam)[1:20])
@@ -495,34 +496,57 @@ protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, func
 protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
 protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
 
-model <- lm(is_disease ~ hydro_change + size_change + location, data = protein_annotate_onlysnp)
+model <- lm(is_disease ~ hydro_change + location + location:size_change, data = protein_annotate_onlysnp)
 
-model <- lm(is_disease ~ hydro_change:loc_factor, data = protein_annotate_onlysnp)
+#model <- lm(is_disease ~ hydro_change:loc_factor, data = protein_annotate_onlysnp)
 summary(model)
-pre_result <- predict(model)
+pre_result_lm <- predict(model)
+
 
 library('e1071')
-obj <- tune.svm(is_disease ~ ., data = subset(train_data, select = c("is_disease", "hydro_change", "size_change", "location")), gama = 2^(-10:1), cost = 2^(2:10))
-model <- obj$best.model
-pre_result_train <- predict(model, subset(train_data,select = Open.Date:P37))
-svm_se = sqrt(sum((pre_result_train - train_data$revenue)^2)/ length(train_data$revenue))
-svm_se
+model <- svm(is_disease ~ ., data = subset(protein_annotate_onlysnp, select = c("is_disease", "hydro_change", "size_change", "location")), type = "C-classification", probability = T)
+pre_result <- predict(model, subset(protein_annotate_onlysnp, select = c( "hydro_change", "size_change", "location")), probability = T)
+pre_result_svm <- attr(pre_result, "probabilities")[,2]
 
+# load data from SIFT
+SIFT_score <- read.table("./Data/siftscore.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
+colnames(SIFT_score) <- c("FTID", "SIFT_score")
+SIFT_result<- subset(merge(protein_annotate_onlysnp, SIFT_score, by = c("FTID")), select = c("is_disease", "SIFT_score"))
 
-#AUC
-install.packages("ROCR")
-library(ROCR)
-
-pred <- prediction(pre_result, protein_annotate_onlysnp$is_disease)
-perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+pred <- with(SIFT_result, prediction(SIFT_score, is_disease))
+perf_sift <- performance(pred, measure = "tpr", x.measure = "fpr")
+auc_sift <- performance(pred, measure = "auc")
+perf_sift$type <- "SIFT"
 pdf("tmp.pdf")
 plot(perf, col=rainbow(10))
 abline(a = 0, b = 1)
 dev.off()
 
-# load data from SIFT
-SIFT_score <- read.table("./Data/siftscore.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
-colnames(SIFT_Score) 
+#AUC
+get_auc <- function(pre_result){
+  pred <- prediction(pre_result, protein_annotate_onlysnp$is_disease)
+  perf_loc <- performance(pred, measure = "tpr", x.measure = "fpr")
+  auc_loc <- performance(pred, measure = "auc")
+  attr(auc_loc, "y.value")[[1]]
+}
+get_auc(pre_result_lm)
+
+install.packages("ROCR")
+library(ROCR)
+
+roc_d <- function(pre_result) {
+  pred <- prediction(pre_result, protein_annotate_onlysnp$is_disease)
+  perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+  data.frame(fpr = perf@x.values[[1]], tpr = perf@y.values[[1]])
+}
+roc_data <- rbind(cbind(roc_d(pre_result_lm), predictor = "Logistic"), cbind(roc_d(pre_result_svm), predictor = "SVM"), cbind(fpr = perf_sift@x.values[[1]], tpr = perf_sift@y.values[[1]], predictor = "SIFT"))
+
+auc_loc <- performance(pred, measure = "auc")
+perf_loc$type <- "location"
+pdf("tmp.pdf")
+plot(perf, col=rainbow(10))
+abline(a = 0, b = 1)
+dev.off()
 
 
 
