@@ -66,6 +66,3 @@ ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
 
 ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
 ```
-
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

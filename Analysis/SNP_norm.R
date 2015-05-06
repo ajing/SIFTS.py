@@ -649,7 +649,7 @@ fish_bs(protein_annotate_withsnp_site, "Polymorphism", "center")
 fish_bs(protein_annotate_withsnp_site, "Unclassified", "center")
 
 
-# allsoteric sites or other sites
+# allosteric sites or other sites
 allo_res <- read.table("./Data/pro_res_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 colnames(allo_res) <- c("UniProtID", "uniprot_resnum")
 allo_res$allosite = "Allo"

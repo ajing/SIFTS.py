@@ -10,14 +10,13 @@ BIODIR = "2013_biounits_noligand"
 #BIODIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/test"
 OUTDIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/out_naccess"
 NACCESS_DIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/naccess2.1.1/naccess"
+TMP_DIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/tmp"
 
 COLNAME = ["all_atoms_abs", "all_atoms_rel", "non_polar_abs", "non_polar_rel", "all_polar_abs", "all_polar_rel"]
 
 def RunNACCESS(model, pdbfile):
-    #print model, pdbfile
-    naccess = NACCESS(model, pdbfile, NACCESS_DIR)
     try:
-        naccess = NACCESS(model, pdbfile, NACCESS_DIR)
+        naccess = NACCESS(model, pdbfile, NACCESS_DIR, TMP_DIR)
     except:
         return None
     reslist = []
