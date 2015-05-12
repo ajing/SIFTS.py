@@ -283,4 +283,3 @@ sum(((pred_result2 >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("D
 sum(pred_result2 >= 0)
 
 ```
-
