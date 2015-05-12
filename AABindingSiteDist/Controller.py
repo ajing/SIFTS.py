@@ -50,7 +50,7 @@ def BSParser(infile):
         chainid = content[BSLineOrder.index("ChainID")]
         bscode  = content[BSLineOrder.index("BSID")]
         ligname = content[BSLineOrder.index("LigName")]
-        ligchain= content[BSLineOrder.index("LigName")]
+        ligchain= content[BSLineOrder.index("LigChain")]
         bsres   = content[BSLineOrder.index("BSRes")]
         newbs   = BindingSite(pdbid, chainid, bscode, ligchain, ligname)
         for eachres in bsres.split():
@@ -76,6 +76,13 @@ def BSParser(infile):
             print "Cannot find file " + pdbid
     return bslist
 
+def PrintBSList(bslist):
+    for eachbs in bslist:
+        for eachres in eachbs.residuelist:
+            content = [eachbs.pdbid, eachbs._ligchain, eachbs._ligname, eachbs.bscode, eachres.getPDBresChain(), eachres.getPDBresName(), eachres.getPDBresNum()]
+            print "\t".join(map(str, content))
+
 if __name__ == "__main__":
     bslist = BSParser(BSDIR)
-    GetAllDist(bslist)
+    PrintBSList(bslist)
+    #GetAllDist(bslist)

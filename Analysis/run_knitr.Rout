@@ -41,10 +41,10 @@ label: unnamed-chunk-2 (with options)
 List of 1
  $ echo: logi FALSE
 
-  |                                                                         |..........                                                       |  16%
+  |                                                                         |..........                                                       |  15%
   ordinary text without R code
 
-  |                                                                         |............                                                     |  19%
+  |                                                                         |............                                                     |  18%
 label: unnamed-chunk-3 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -52,10 +52,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |..............                                                   |  22%
+  |                                                                         |..............                                                   |  21%
   ordinary text without R code
 
-  |                                                                         |................                                                 |  25%
+  |                                                                         |................                                                 |  24%
 label: unnamed-chunk-4 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -63,10 +63,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |..................                                               |  28%
+  |                                                                         |..................                                               |  27%
   ordinary text without R code
 
-  |                                                                         |....................                                             |  31%
+  |                                                                         |....................                                             |  30%
 label: unnamed-chunk-5 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -74,10 +74,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |......................                                           |  34%
+  |                                                                         |......................                                           |  33%
   ordinary text without R code
 
-  |                                                                         |........................                                         |  38%
+  |                                                                         |........................                                         |  36%
 label: unnamed-chunk-6 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -85,10 +85,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |..........................                                       |  41%
+  |                                                                         |..........................                                       |  39%
   ordinary text without R code
 
-  |                                                                         |............................                                     |  44%
+  |                                                                         |............................                                     |  42%
 label: unnamed-chunk-7 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -96,10 +96,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |..............................                                   |  47%
+  |                                                                         |..............................                                   |  45%
   ordinary text without R code
 
-  |                                                                         |................................                                 |  50%
+  |                                                                         |................................                                 |  48%
 label: unnamed-chunk-8 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -107,10 +107,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |...................................                              |  53%
+  |                                                                         |.................................                                |  52%
   ordinary text without R code
 
-  |                                                                         |.....................................                            |  56%
+  |                                                                         |...................................                              |  55%
 label: unnamed-chunk-9 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -118,10 +118,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |.......................................                          |  59%
+  |                                                                         |.....................................                            |  58%
   ordinary text without R code
 
-  |                                                                         |.........................................                        |  62%
+  |                                                                         |.......................................                          |  61%
 label: unnamed-chunk-10 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -129,18 +129,18 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |...........................................                      |  66%
+  |                                                                         |.........................................                        |  64%
   ordinary text without R code
 
-  |                                                                         |.............................................                    |  69%
+  |                                                                         |...........................................                      |  67%
 label: unnamed-chunk-11 (with options) 
 List of 1
  $ echo: logi FALSE
 
-  |                                                                         |...............................................                  |  72%
+  |                                                                         |.............................................                    |  70%
   ordinary text without R code
 
-  |                                                                         |.................................................                |  75%
+  |                                                                         |...............................................                  |  73%
 label: unnamed-chunk-12 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -148,10 +148,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |...................................................              |  78%
+  |                                                                         |.................................................                |  76%
   ordinary text without R code
 
-  |                                                                         |.....................................................            |  81%
+  |                                                                         |...................................................              |  79%
 label: unnamed-chunk-13 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -159,10 +159,10 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |.......................................................          |  84%
+  |                                                                         |.....................................................            |  82%
   ordinary text without R code
 
-  |                                                                         |.........................................................        |  88%
+  |                                                                         |.......................................................          |  85%
 label: unnamed-chunk-14 (with options) 
 List of 4
  $ echo      : logi FALSE
@@ -170,19 +170,24 @@ List of 4
  $ fig.height: num 3
  $ tidy      : logi TRUE
 
-  |                                                                         |...........................................................      |  91%
+  |                                                                         |.........................................................        |  88%
   ordinary text without R code
 
-  |                                                                       1427297487628	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
-ogi FALSE
+  |                                                                         |...........................................................      |  91%
+label: unnamed-chunk-15 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                         |.............................................................    |  94%
+  ordinary text without R code
 
   |                                                                         |...............................................................  |  97%
-  ordinary text without R code
-
-  |                                                                         |.................................................................| 100%
 label: unnamed-chunk-16 (with options) 
 List of 1
  $ echo: logi FALSE
+
+  |                                                                         |.................................................................| 100%
+  ordinary text without R code
 
 
 output file: test.md
@@ -193,4 +198,50 @@ output file: test.md
 > 
 > proc.time()
    user  system elapsed 
- 84.971   5.186  90.275 
+ 87.434   4.919  92.401 
+1427383888430	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427470288059	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427556688187	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427643087128	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427729487388	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427815887447	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427902287526	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1427988689350	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428075087450	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428161487728	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428247887858	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428334287695	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428420688134	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+
+###!!! [Child][MessageChannel] Error: Channel closing: too late to send/recv, messages will be lost
+
+1428507088573	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428593488266	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428679889178	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428766287856	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428852687993	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1428939087888	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429025487982	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429111888345	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429198287472	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429284688284	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429371088348	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429457487399	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429543887679	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429630287981	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429716688087	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429803088118	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429889488186	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1429975887702	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430062287518	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430148688059	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430235088339	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430321488049	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430407888440	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430494292382	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430580690667	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430667096120	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430753495934	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430839898625	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1430926298526	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property
+1431012701145	addons.update-checker	WARN	Update manifest for {972ce4c6-7e08-4474-a285-3208198ce6fd} did not contain an updates property

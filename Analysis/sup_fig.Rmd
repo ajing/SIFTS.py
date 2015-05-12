@@ -240,7 +240,7 @@ protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, func
 protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
 protein_annotate_onlysnp$is_disease <- protein_annotate_onlysnp$VarType == "Disease"
 
-model = with(protein_annotate_onlysnp, glm(is_disease ~ abs(hydro_change) + abs(size_change), family = binomial(logit)))
+model = with(protein_annotate_onlysnp, glm(is_disease ~ abs(hydro_change) + abs(size_change), family = "binomial"))
 summary(model)
 pred_result = predict(model, protein_annotate_onlysnp)
 summary(pred_result)
@@ -250,8 +250,37 @@ sum((pred_result < 0 ) == protein_annotate_onlysnp$is_disease) / length(pred_res
 
 ## With only disease and polymorphism
 ```{r echo=FALSE}
-model = with(subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism")), glm(is_disease ~ abs(hydro_change) + abs(size_change), family = binomial(logit)))
+model = with(subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Unclassified")), glm(is_disease ~ abs(hydro_change) + abs(size_change), family = "binomial"))
 summary(model)
-pred_result = predict(model, subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism")))
-sum((pred_result >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Polymorphism"))$is_disease) / length(pred_result)
+pred_result2 = predict(model, subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Unclassified")))
+# accuracy
+sum((pred_result2 >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Unclassified"))$is_disease) / length(pred_result2)
+
+print(dim(protein_annotate_onlysnp))
+
+library(dplyr)
+change_stat <- summarise(group_by(protein_annotate_onlysnp, VarType), size.mean=mean(size_change), size.abs.mean = mean(abs(size_change)), hydro.mean = mean(hydro_change), hydro.abs.mean = mean(abs(hydro_change)))
+
+print(change_stat)
+
+ggplot( data = protein_annotate_onlysnp, aes(x = size_change, color = VarType)) + geom_density() + geom_vline( data = change_stat, aes(xintercept=size.mean, color = VarType))
+ggplot( data = protein_annotate_onlysnp, aes(x = hydro_change, color = VarType)) + geom_density() + geom_vline( data = change_stat, aes(xintercept=hydro.mean, color = VarType))
+
+print("with abs")
+ggplot( data = protein_annotate_onlysnp, aes(x = abs(size_change), color = VarType)) + geom_density() +  geom_vline( data = change_stat, aes(xintercept= size.abs.mean, color = VarType))
+ggplot( data = protein_annotate_onlysnp, aes(x = abs(hydro_change), color = VarType)) + geom_density() +  geom_vline( data = change_stat, aes(xintercept= hydro.abs.mean, color = VarType))
+
+
+summary(pred_result2)
+
+table(protein_annotate_onlysnp$is_disease)
+
+sum((pred_result2 >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Unclassified"))$is_disease)
+length(pred_result2)
+
+# true positive rate
+sum(((pred_result2 >= 0 ) ==  subset(protein_annotate_onlysnp, VarType %in% c("Disease", "Unclassified"))$is_disease)[pred_result2 >= 0])
+sum(pred_result2 >= 0)
+
 ```
+

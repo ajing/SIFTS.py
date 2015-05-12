@@ -147,7 +147,7 @@ In protein core
 ## 
 ## Call:
 ## glm(formula = is_disease ~ abs(hydro_change) + abs(size_change), 
-##     family = binomial(logit))
+##     family = "binomial")
 ## 
 ## Deviance Residuals: 
 ##     Min       1Q   Median       3Q      Max  
@@ -189,29 +189,91 @@ In protein core
 ## 
 ## Call:
 ## glm(formula = is_disease ~ abs(hydro_change) + abs(size_change), 
-##     family = binomial(logit))
+##     family = "binomial")
 ## 
 ## Deviance Residuals: 
 ##     Min       1Q   Median       3Q      Max  
-## -1.9878  -1.3703   0.7509   0.9365   1.1199  
+## -1.6899  -1.4558   0.8478   0.9061   0.9596  
 ## 
 ## Coefficients:
 ##                    Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)       0.0854851  0.0617659   1.384    0.166    
-## abs(hydro_change) 0.0069434  0.0007672   9.050   <2e-16 ***
-## abs(size_change)  0.0074640  0.0008338   8.952   <2e-16 ***
+## (Intercept)       0.5162465  0.0634145   8.141 3.93e-16 ***
+## abs(hydro_change) 0.0006213  0.0007099   0.875    0.381    
+## abs(size_change)  0.0038335  0.0007852   4.882 1.05e-06 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 6770.3  on 5423  degrees of freedom
-## Residual deviance: 6615.1  on 5421  degrees of freedom
-## AIC: 6621.1
+##     Null deviance: 6882.1  on 5472  degrees of freedom
+## Residual deviance: 6857.6  on 5470  degrees of freedom
+## AIC: 6863.6
 ## 
 ## Number of Fisher Scoring iterations: 4
 ```
 
 ```
-## [1] 0.6836283
+## [1] 0.6775078
 ```
+
+```
+## [1] 7189   41
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```
+## Source: local data frame [3 x 5]
+## 
+##        VarType size.mean size.abs.mean hydro.mean hydro.abs.mean
+## 1      Disease -3.758900      53.47627   2.179612       51.07120
+## 2 Polymorphism  1.601399      44.42308  -7.571678       41.42016
+## 3 Unclassified -3.093484      48.10198  -4.593201       50.81983
+```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png) ![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-2.png) 
+
+```
+## [1] "with abs"
+```
+
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-3.png) ![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-4.png) 
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.5367  0.6446  0.7104  0.7463  0.8310  1.1540
+```
+
+```
+## 
+## FALSE  TRUE 
+##  3481  3708
+```
+
+```
+## [1] 3708
+```
+
+```
+## [1] 5473
+```
+
+```
+## [1] 3708
+```
+
+```
+## [1] 5473
+```
+
