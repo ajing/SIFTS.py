@@ -59,16 +59,16 @@ def run_naccess(model, pdb_file, probe_size=None, z_slice=None,
 
    # p = subprocess.Popen(command, universal_newlines=True,
    #                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell = True)
-    p = subprocess.call(command)
+    p = subprocess.call(" ".join(command), shell=True)
 
     #out, err = p.communicate()
     os.chdir(old_dir)
 
     # get the output, then delete the temp directory
-    rsa_file = tmp_pdb_file[:-4] + '.rsa'
+    rsa_file = tmp_pdb_file[:-13] + 'SIFTS.rsa'
     with open(rsa_file) as rf:
         rsa_data = rf.readlines()
-    asa_file = tmp_pdb_file[:-4] + '.asa'
+    asa_file = tmp_pdb_file[:-13] + 'SIFTS.asa'
     with open(asa_file) as af:
         asa_data = af.readlines()
 
