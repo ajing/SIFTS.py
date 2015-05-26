@@ -77,9 +77,7 @@ def getCorrespondingUniProt(proteins, pdbid, chainid, resnum):
     for res in protein:
         if chainid == res.getPDBresChain() and resnum == res.getPDBresNum():
             return res.getUniProtInfo(pdbid, chainid, resnum)
-
     raise Exception("Cannot find corresponding UniProt for: %s, %s, %s" % (pdbid, chainid, resnum))
-
 
 if __name__ == "__main__":
     processOneXML("200l.xml")

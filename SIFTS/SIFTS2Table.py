@@ -20,7 +20,7 @@ mutex_writefile = threading.Lock()
 
 
 def oneXML2Table(filename):
-    print "filename", filename
+    #print "filename", filename
     content = []
     protein = processOneXML(filename)
     pdbid   = protein.pdbid
@@ -57,15 +57,20 @@ def FileFilter(inputlist):
         moadlist.append(content.lower())
     newlist = []
     moadcopy= list(moadlist)
-    print len(moadlist)
+    #print "moadlist len,",len(moadlist)
+    #print "inputlist len,", len(inputlist)
     for eachfile in inputlist:
         pdb = eachfile.split('/')[-1].split('.')[0]
-        if pdb in pdblist and pdb in moadlist:
-            moadcopy.remove(pdb)
-        if not pdb in pdblist and pdb in moadlist:
-            moadcopy.remove(pdb)
+        if not pdb in pdblist:
             newlist.append(eachfile)
-    #print moadcopy
+        #print "pdb:", pdb
+        ## the following code is for BindingMOAD only
+        #if pdb in pdblist and pdb in moadlist:
+        #    moadcopy.remove(pdb)
+        #if not pdb in pdblist and pdb in moadlist:
+        #    moadcopy.remove(pdb)
+        #    newlist.append(eachfile)
+    #print "final list:", len(newlist)
     return newlist
 
 def XML2Table(filedir):
@@ -79,8 +84,9 @@ def XML2Table(filedir):
         for afile in files:
             afile = os.path.join(root, afile)
             inputlist.append(afile)
+    #print "original:", len(inputlist)
     inputlist = FileFilter(inputlist)
-    print len(inputlist)
+    #print len(inputlist)
     if MULTIPRO:
         pool = Pool(processes = 5)
         result = pool.map_async(oneXML2Table, inputlist)

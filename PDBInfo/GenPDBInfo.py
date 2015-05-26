@@ -6,9 +6,10 @@ import os
 from Bio.PDB import PDBParser
 from Bio.PDB import DSSP
 
-BIODIR = "2013_biounits_noligand"
-#BIODIR = "../../ligandNet/2013_biounits_noligand"
-OUTDIR = "out2"
+BIODIR = "../../ligandNet/2013_biounits_noligand"
+BIODIR = "../pdb_nogz"
+#BIODIR = "2013_biounits_noligand"
+OUTDIR = "out_all_pdb"
 #DSSPDIR= "./dssp-2.0.4-linux-amd64"
 DSSPDIR= "dssp"
 
