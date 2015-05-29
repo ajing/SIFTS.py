@@ -140,3 +140,9 @@ ggsave("sample_onegene_aa.jpg")
 p53_aa_sum <- s_result$p53_cds_sum
 ggplot(data=subset(p53_cds_sum, total_num >= tail(sort(p53_cds_sum$total_num), 21)[1]), aes(x=Mutation.CDS.C,y=total_num)) + geom_bar(stat="identity") + theme(axis.text.x = element_text( size=8, angle=30))
 ggsave("sample_onegene_cds.jpg")
+
+
+####################################################################################
+##########   Why no consistency between transcript level and gene level############
+####################################################################################
+table()
