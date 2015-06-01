@@ -137,7 +137,7 @@ s_result <- get_summary_data(p53_join_one)
 p53_aa_sum <- s_result$p53_aa_sum
 ggplot(data=subset(p53_aa_sum, total_num >= tail(sort(p53_aa_sum$total_num), 21)[1]), aes(x=Mutation.AA.C,y=total_num)) + geom_bar(stat="identity") + theme(axis.text.x = element_text( size=8, angle=30))
 ggsave("sample_onegene_aa.jpg")
-p53_aa_sum <- s_result$p53_cds_sum
+p53_cds_sum <- s_result$p53_cds_sum
 ggplot(data=subset(p53_cds_sum, total_num >= tail(sort(p53_cds_sum$total_num), 21)[1]), aes(x=Mutation.CDS.C,y=total_num)) + geom_bar(stat="identity") + theme(axis.text.x = element_text( size=8, angle=30))
 ggsave("sample_onegene_cds.jpg")
 
@@ -145,4 +145,9 @@ ggsave("sample_onegene_cds.jpg")
 ####################################################################################
 ##########   Why no consistency between transcript level and gene level############
 ####################################################################################
-table()
+result <- with(subset(cosmic_p53, Mutation.AA %in% c("p.R175H", "p.R43H")), table(factor(Accession.Number), factor(Mutation.AA)))
+result <- with(subset(cosmic_p53, Mutation.AA %in% c("p.R175H", "p.R43H", "p.R82H")), table(factor(Accession.Number), factor(Mutation.AA)))
+
+save.image("p53.RData")
+
+write.csv(result, file = "tmp.csv")
