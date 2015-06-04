@@ -130,6 +130,7 @@ ggplot(data=subset(p53_cds_sum, total_num >= tail(sort(p53_cds_sum$total_num), 2
 ggsave("sample_transcript_cds.jpg")
 
 
+# This is for each gene, because they have different name of Gene.name for transcript also. So, this part is more correct for gene mutation distribution
 p53_join_one <- merge(subset(cosmic_p53, !is.na(Mutation.CDS) | !is.na(Mutation.AA)), subset(cosmic_p53, !is.na(Mutation.CDS) | !is.na(Mutation.AA)), by = c("ID_sample", "ID_STUDY"))
 
 s_result <- get_summary_data(p53_join_one)
@@ -151,3 +152,74 @@ result <- with(subset(cosmic_p53, Mutation.AA %in% c("p.R175H", "p.R43H", "p.R82
 save.image("p53.RData")
 
 write.csv(result, file = "tmp.csv")
+
+
+##############################################################################################
+###########    dual mutation frequency distribution for only one transcript and    ###########
+##############################################################################################
+# If yes, we should look for dual mutations within each transcript instead of mixed transcripts in searching for latent mutations. Also, statistically, the significance of dual mutations should be normalized by the occurrence of individual mutation.
+
+# The number of co-occured mutations at each transcript for each patient
+transcript_co_mut_num <- cosmic_missense %>% group_by(ID_sample, ID_STUDY, Accession.Number) %>% summarise(total_num = length(Mutation.AA))
+
+ggplot(transcript_co_mut_num, aes(x = total_num)) + geom_histogram()
+ggsave("mut_dist_co_trans.jpg")
+
+# distribution of occurrence for individual mutation
+transcript_mut_num <- cosmic_missense %>% group_by(ID_sample, ID_STUDY, Accession.Number, Mutation.AA) %>% summarise(total_num = n())
+
+ggplot(transcript_mut_num, aes(x = total_num)) + geom_histogram()
+ggsave("mut_dist_trans.jpg")
+
+## for just p53
+mut_count_p53 <- subset(cosmic_p53, !is.na(Mutation.CDS) | !is.na(Mutation.AA)) %>% group_by(Accession.Number, Mutation.AA) %>% summarise(mut_count = n())
+
+ggplot(mut_count_p53, aes(x = mut_count)) + geom_histogram()  + scale_x_log10()
+ggsave("mut_dist_p53.jpg")
+
+# The dual mutation for each transcript divided by min of occurrence of individual mutation
+
+# recalculaet the data, because some redundancy involved for HGNC column
+cosmic_p53_nr <- subset(cosmic_p53, !is.na(Mutation.CDS) | !is.na(Mutation.AA)) %>% distinct(ID_sample, ID_STUDY, Accession.Number, Mutation.AA)
+
+p53_join_t <- merge(cosmic_p53_nr, cosmic_p53_nr, by = c("ID_sample", "ID_STUDY", "Accession.Number"))
+
+## For normalization
+p53_join_norm <- merge(p53_join_t, mut_count_p53, by.x = c("Accession.Number", "Mutation.AA.x"), by.y = c("Accession.Number", "Mutation.AA"))
+p53_join_norm <- merge(p53_join_norm, mut_count_p53, by.x = c("Accession.Number", "Mutation.AA.y"), by.y = c("Accession.Number", "Mutation.AA"))
+p53_join_norm$mut_count.min <- do.call(pmin, subset(p53_join_norm, select = c(mut_count.x, mut_count.y)))
+
+get_summary_data_norm <- function(p53_join) {
+  p53_join <- subset(p53_join, Mutation.ID.x != Mutation.ID.y)
+  p53_join$Mutation.CDS.C <- apply(p53_join, 1, function(x){paste(sort(c(x[["Mutation.CDS.x"]],x[["Mutation.CDS.y"]])), collapse = " and ")})
+  p53_join$Mutation.AA.C <- apply(p53_join, 1, function(x){paste(sort(c(x[["Mutation.AA.x"]],x[["Mutation.AA.y"]])), collapse = " and ")})
+  p53_join$Mutation.CDS.C <- factor(p53_join$Mutation.CDS.C)
+  p53_join$Mutation.AA.C <- factor(p53_join$Mutation.AA.C)
+  
+  p53_aa_sum <- subset(p53_join, Mutation.AA.x != Mutation.AA.y, select = c(Accession.Number, Mutation.AA.C, mut_count.min)) %>% 
+    group_by(Accession.Number, Mutation.AA.C) %>%
+    select(mut_count.min) %>%
+    summarise(total_score =  n() / (2 * first(mut_count.min)), mut_count_min = first(mut_count.min))
+  p53_aa_sum$Mutation.AA.C = reorder(p53_aa_sum$Mutation.AA.C, -p53_aa_sum$total_score)
+  
+#  p53_cds_sum <- subset(p53_join, Mutation.CDS.x != Mutation.CDS.y, select = Mutation.CDS.C) %>% 
+#    group_by(Mutation.CDS.C) %>%
+#    summarise(total_num = length(Mutation.CDS.C) / )
+#  p53_cds_sum$Mutation.CDS.C = reorder(p53_cds_sum$Mutation.CDS.C, -p53_cds_sum$total_num)
+  
+#  list("p53_aa_sum" = p53_aa_sum, "p53_cds_sum" = p53_cds_sum)
+
+  list("p53_aa_sum" = p53_aa_sum)
+}
+s_result <- get_summary_data_norm(p53_join_norm)
+
+p53_aa_sum <- merge(s_result$p53_aa_sum, mut_count_p53)
+
+ggplot(data=subset(s_result$p53_aa_sum, mut_count_min > 1 & total_score > 0.5), aes(x=Mutation.AA.C,y=total_score)) + geom_bar(stat="identity") + theme(axis.text.x = element_text( size=8, angle=30)) + facet_grid(Accession.Number ~.)
+ggsave("transcript_aa_norm.jpg")
+
+
+##############################################################################################
+###########    dual mutation frequency impact on protein structures/functions      ###########
+##############################################################################################
+subset(p53_cds_sum, total_num >= tail(sort(p53_cds_sum$total_num), 21)[1])
