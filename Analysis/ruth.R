@@ -196,10 +196,10 @@ get_summary_data_norm <- function(p53_join) {
   p53_join$Mutation.CDS.C <- factor(p53_join$Mutation.CDS.C)
   p53_join$Mutation.AA.C <- factor(p53_join$Mutation.AA.C)
   
-  p53_aa_sum <- subset(p53_join, Mutation.AA.x != Mutation.AA.y, select = c(Accession.Number, Mutation.AA.C, mut_count.min)) %>% 
+  p53_aa_sum <- subset(p53_join, Mutation.AA.x != Mutation.AA.y, select = c(Accession.Number, Mutation.AA.C, mut_count.min, Mutation.AA.x, Mutation.AA.y)) %>% 
     group_by(Accession.Number, Mutation.AA.C) %>%
-    select(mut_count.min) %>%
-    summarise(total_score =  n() / (2 * first(mut_count.min)), mut_count_min = first(mut_count.min))
+    select(mut_count.min, Mutation.AA.x, Mutation.AA.y) %>%
+    summarise(total_score =  n() / (2 * first(mut_count.min)), mut_count_min = first(mut_count.min), Mutation.AA.x = first(Mutation.AA.x), Mutation.AA.y = first(Mutation.AA.y))
   p53_aa_sum$Mutation.AA.C = reorder(p53_aa_sum$Mutation.AA.C, -p53_aa_sum$total_score)
   
 #  p53_cds_sum <- subset(p53_join, Mutation.CDS.x != Mutation.CDS.y, select = Mutation.CDS.C) %>% 

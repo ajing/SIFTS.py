@@ -65,6 +65,11 @@ rocplot.multiple <- function(test.data.list, groupName = "grp", predName = "res"
     annotation <- with(plotdata$stats, paste("AUC=",signif(auc, 2), " (95%CI ", signif(ci.upper, 2), " - ", signif(ci.lower, 2), ")", sep=""))
   }
   
+  mod_level = plotdata$stats$.id[order(-plotdata$stats$auc)]
+
+  plotdata$roc$.id = factor(plotdata$roc$.id, levels = mod_level)
+  print(levels(plotdata$roc$.id))
+  
   p <- ggplot(plotdata$roc, aes(x = x, y = y)) +
     geom_line(aes(colour = .id)) +
     geom_abline (intercept = 0, slope = 1) +
@@ -78,5 +83,3 @@ rocplot.multiple <- function(test.data.list, groupName = "grp", predName = "res"
 
 p <- rocplot.multiple(list(SVM = data.frame(res = pre_result_svm, grp = protein_annotate_onlysnp$is_disease), Logistic = data.frame(res = pre_result_lm, grp = protein_annotate_onlysnp$is_disease), SIFT = data.frame(res = SIFT_result$SIFT_score, grp = SIFT_result$is_disease)), groupName = "grp", predName = "res", title = "ROC Plot", p.value = F)
 ggsave(filename = "tmp.pdf")
-
-
