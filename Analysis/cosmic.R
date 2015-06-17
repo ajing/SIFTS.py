@@ -20,7 +20,7 @@ cosmic_missense$Mutation.AA.After <- factor(cosmic_missense$Mutation.AA.After)
 
 
 library("sqldf")
-protein_annotate_cancer <- sqldf("select * from protein_annotate left join cosmic_missense where Gene.name = gene_name_acc and Mutation.AA.resnum = resnum")
+protein_annotate_cancer <- sqldf(c("create index idx on cosmic_missense (`Gene.name`, `Mutation.AA.resnum`)", "select * from protein_annotate left join cosmic_missense on `Gene.name` = protein_annotate.gene_name_acc and `Mutation.AA.resnum` = protein_annotate.resnum"))
 protein_annotate_cancer$VarType = NA
 protein_annotate_cancer[!is.na(protein_annotate_cancer$Mutation.AA.Before), "VarType"] = "Cancer"
 
@@ -42,6 +42,7 @@ get_stat_eachtype <- function(p_annotate, snp_type){
 get_stat_eachtype(protein_annotate_cancer, "Cancer")
 
 
+library("epitools")
 odds_ratio_stat <- function(p_annotate, vartype){
   table_res <- table(deal_with_na(p_annotate$VarType == vartype), deal_with_na(p_annotate$location == "Core"))
   table_res <- apply(table_res, 1:2, as.numeric)
@@ -65,7 +66,7 @@ odds_ratio_stat <- function(p_annotate, vartype){
 }
 
 # Cancer
-odds_ratio_stat(protein_annotate_withsnp, "Cancer")
+odds_ratio_stat(protein_annotate_cancer, "Cancer")
 
 # odds ratio between hydrophobic property
 aa_prop_preference <- function(p_annotate_bs){

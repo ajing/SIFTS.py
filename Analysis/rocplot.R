@@ -66,9 +66,10 @@ rocplot.multiple <- function(test.data.list, groupName = "grp", predName = "res"
   }
   
   mod_level = plotdata$stats$.id[order(-plotdata$stats$auc)]
-
   plotdata$roc$.id = factor(plotdata$roc$.id, levels = mod_level)
-  print(levels(plotdata$roc$.id))
+  
+  mod_level = paste(names(test.data.list), ": ", annotation, sep = "")[order(-plotdata$stats$auc)]
+  label_factor = factor(paste(names(test.data.list), ": ", annotation, sep = ""), levels = mod_level)
   
   p <- ggplot(plotdata$roc, aes(x = x, y = y)) +
     geom_line(aes(colour = .id)) +
@@ -76,10 +77,14 @@ rocplot.multiple <- function(test.data.list, groupName = "grp", predName = "res"
     theme_bw() +
     scale_x_continuous("False Positive Rate (1-Specificity)") +
     scale_y_continuous("True Positive Rate (Sensitivity)") +
-    scale_colour_brewer(palette="Set1", breaks = names(test.data.list), labels = paste(names(test.data.list), ": ", annotation, sep = "")) + theme(legend.justification=c(1,0), legend.position=c(1,0), legend.title=element_blank(), legend.key = element_blank())
+    scale_colour_brewer(palette="Set1", labels = mod_level) +
+    theme(legend.justification=c(1,0), legend.position=c(1,0), legend.title=element_blank(), legend.key = element_blank())
 
   return(p)
 }
+
+p <- rocplot.multiple(scores_melt, groupName = "VarType", predName = "value", title = "ROC Plot", p.value = F)
+ggsave(filename = "tmp.pdf")
 
 p <- rocplot.multiple(list(SVM = data.frame(res = pre_result_svm, grp = protein_annotate_onlysnp$is_disease), Logistic = data.frame(res = pre_result_lm, grp = protein_annotate_onlysnp$is_disease), SIFT = data.frame(res = SIFT_result$SIFT_score, grp = SIFT_result$is_disease)), groupName = "grp", predName = "res", title = "ROC Plot", p.value = F)
 ggsave(filename = "tmp.pdf")
