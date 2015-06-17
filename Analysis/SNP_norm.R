@@ -617,6 +617,11 @@ poligand$total_res = apply(poligand, 1, function(x){length(subset(poligand, VarT
 ggplot(poligand, aes(x = ligcount, color = VarType)) + scale_x_log10() + geom_density() + geom_vline(aes(xintercept=ligcount.mean),linetype="dashed", size=1, color = "red") 
 ggsave(filename = "tmp.pdf")
 
+
+pdf("tmp.pdf")
+hist(poligand$ligcount)
+dev.off()
+
 pdf("tmp.pdf")
 with(poligand, boxplot(ligcount~VarType,notch=T, log = "y"))
 dev.off()
@@ -638,7 +643,8 @@ colnames(pro_res_lig) <- c("UniProtID", "uniprot_resnum", "ligcount_res")
 protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_lig_count, all.x = TRUE)
 protein_annotate_withsnp_site <- merge(protein_annotate_withsnp_site, pro_res_lig, all.x = TRUE)
 
-protein_annotate_withsnp_site$site_annotat <- with(protein_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .75)])
+#protein_annotate_withsnp_site$site_annotat <- with(protein_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .75)])
+protein_annotate_withsnp_site$site_annotat <- with(protein_annotate_withsnp_site, c("center", "periphery")[ 1 + (ligcount_res / ligcount < .9)])
 
 fish_bs <- function(p_annotate_bs, vartype, loc){
   fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$VarType == vartype, Central = p_annotate_bs$site_annotat == loc)))
@@ -647,9 +653,14 @@ fish_bs <- function(p_annotate_bs, vartype, loc){
 fish_bs(protein_annotate_withsnp_site, "Disease", "center")
 fish_bs(protein_annotate_withsnp_site, "Polymorphism", "center")
 fish_bs(protein_annotate_withsnp_site, "Unclassified", "center")
+# based on this result polymorphism are more likely to be in the center of binding sites, and unclassifed SNP are less likely to be located in the center and disesae SNP has no preference
+
+fish_bs(subset(protein_annotate_withsnp_site, !grepl("*histocompatibility antigen*", x = proteinname)), "Polymorphism", "center")
 
 
-# allosteric sites or other sites
+
+
+################# allsoteric sites or other sites
 allo_res <- read.table("./Data/pro_res_count.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 colnames(allo_res) <- c("UniProtID", "uniprot_resnum")
 allo_res$allosite = "Allo"
