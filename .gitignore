@@ -49,5 +49,6 @@ docs/_build/
 # PyBuilder
 target/
 .Rproj.user
+
 packrat/lib*/
 .Rhistory
