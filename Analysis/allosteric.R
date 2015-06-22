@@ -10,13 +10,6 @@ allo_annotate$location[allo_annotate$ssa > 5] = "Surface"
 
 allo_annotate[!is.na(allo_annotate$ligandName), "location"] = "Binding Site"
 
-table(allo_annotate$VarType, allo_annotate$location)
-
-Binding Site Core Surface
-Disease              1739  125     444
-Polymorphism          288    8     129
-Unclassified          682   10     367
-
 
 # only keep UniProt with at least one nsSNP
 require(plyr)
@@ -31,6 +24,10 @@ Disease              1739  125     444
 Polymorphism          288    8     129
 Unclassified          682   10     367"
 
+margin.table(table(allo_annotate_withsnp$VarType, allo_annotate_withsnp$location), 1)
+
+prop.table(margin.table(table(allo_annotate_withsnp$VarType, allo_annotate_withsnp$location), 1)
+)
 
 length(unique(allo_annotate[allo_annotate$VarType == "Unclassified",]$UniProtID)) #17
 
@@ -53,6 +50,7 @@ Disease       108         1633  125     442
 Polymorphism    6          288    8     123
 Unclassified   64          638   10     347"
 
+prop.table(table(allo_site$VarType, allo_site$allosite))
 
 
 fish_bs <- function(p_annotate_bs, vartype, loc){
