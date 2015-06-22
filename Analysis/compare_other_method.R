@@ -69,8 +69,6 @@ scores_melt <- split(scores_melt, scores_melt$variable)
 ############ another way to ensemble
 combined = merge(subset(scores, !is.na(FATHMM), select = c("FTID", "FATHMM")), subset(protein_annotate_onlysnp, select = c("FTID", "is_disease", "hydro_change", "size_change", "location")), by = "FTID")
 
-combined$
-
 trainIndex <- createResample(combined$FTID, times = 1, list = F)
 
 model_ensemble <- svm(is_disease ~ ., data = subset(combined[trainIndex, ], select = -FTID), type = "C-classification", probability = T)
@@ -85,6 +83,95 @@ scores_melt <- subset(scores_melt, VarType %in% c("Polymorphism", "Disease") & !
 scores_melt$VarType <- factor(scores_melt$VarType, levels = c("Polymorphism", "Disease"))
 scores_melt <- split(scores_melt, scores_melt$variable)
 
+## still not so good (AUC: 0.85, FATHMM is 0.9)
+
+############# OK, I will use xgboost to kick your ass
+# Convert from classes to numbers
+require(xgboost)
+require(methods)
+require(data.table)
+require(magrittr)
+
+combined = merge(subset(scores, !is.na(FATHMM), select = c("FTID", "FATHMM")), subset(protein_annotate_onlysnp, select = c("FTID", "VarType", "hydro_change", "size_change", "location")), by = "FTID")
+combined = subset(combined, VarType %in% c("Disease", "Polymorphism"))
+
+combined$is_disease[combined$VarType == "Disease"] = 1
+combined$is_disease[combined$VarType == "Polymorphism"] = 0
+combined$VarType = NULL
+
+combined_xg = subset(combined, select = -FTID)
+combined_xg$location[combined_xg$location == "Core"] = 1
+combined_xg$location[combined_xg$location == "Surface"] = 2
+combined_xg$location[combined_xg$location == "Binding Site"] = 3
+combined_xg$location = as.numeric(combined_xg$location)
+
+trainIndex <- createResample(combined_xg$is_disease, times = 1, list = F)
+
+train = data.table(combined_xg[trainIndex, ])
+test  = data.table(combined_xg[-trainIndex, ])
+y = train$is_disease
+train$is_disease = NULL
+
+trainMatrix <- train[,lapply(.SD,as.numeric)] %>% as.matrix
+testMatrix <- test[,lapply(.SD,as.numeric)] %>% as.matrix
+
+numberOfClasses <- max(y) + 1
+
+param <- list("objective" = "binary:logistic",
+              "eval_metric" = "auc")
+
+cv.nround <- 1000
+cv.nfold <- 3
+
+bst.cv = xgb.cv(param=param, data = trainMatrix, label = y, 
+                nfold = cv.nfold, nrounds = cv.nround)
+
+# train the real model
+nround = which(bst.cv$test.auc.mean == max(bst.cv$test.auc.mean))
+# 688
+bst = xgboost(param=param, data = trainMatrix, label = y, nrounds=nround)
+
+pre_result_ensemble <- predict(bst, testMatrix)
+
+test_result <- merge(subset(scores, select = -VarType), data.frame(FTID = combined[-trainIndex, ]$FTID, Ensemble = pre_result_ensemble, VarType = combined[-trainIndex, ]$is_disease), by = "FTID")
+
+######## SVM for only three variables
+library('e1071')
+library(doMC)
+registerDoMC(cores = 4)
+
+model <- svm(is_disease ~ hydro_change + location + location:size_change, data = cbind(trainMatrix, is_disease = y), type = "C-classification", probability = T)
+pre_result <- predict(model, testMatrix, probability = T)
+pre_result_svm <- attr(pre_result, "probabilities")[,2]
+# 0.665
+
+fitControl <- trainControl(## 10-fold CV
+  method = "repeatedcv",
+  number = 10,
+  ## repeated ten times
+  classProbs = T,
+  repeats = 10)
+
+svmFit <- train(is_disease ~ ., data = data.frame(trainMatrix, is_disease = c("Polymorphism", "Disease")[y + 1]),
+                method = "svmLinear",
+                trControl = fitControl,
+                preProc = c("center", "scale"),
+                tuneLength = 8,
+                verbose = T,
+                metric = "ROC")
+
+pre_result <- predict(model, subset(testMatrix, select = -is_disease), probability = T)
+pre_result_svm <- attr(pre_result, "probabilities")[,2]
+
+# adding svm
+test_result <- merge(subset(scores, select = -VarType), data.frame(FTID = combined[-trainIndex, ]$FTID, SVMSimple = 1- pre_result_svm, Ensemble = pre_result_ensemble, VarType = combined[-trainIndex, ]$is_disease), by = "FTID")
+
+
+scores_melt <- melt(test_result, id=c("FTID", "VarType"))
+scores_melt <- subset(scores_melt, !is.na(value))
+#scores_melt <- subset(scores_melt, VarType %in% c("Polymorphism", "Disease") & !is.na(value))
+#scores_melt$VarType <- factor(scores_melt$VarType, levels = c("Polymorphism", "Disease"))
+scores_melt <- split(scores_melt, scores_melt$variable)
 
 ### Plot with test
 p <- rocplot.multiple(scores_melt, groupName = "VarType", predName = "value", title = "ROC Plot", p.value = F)

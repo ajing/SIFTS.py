@@ -60,9 +60,9 @@ rocplot.multiple <- function(test.data.list, groupName = "grp", predName = "res"
   )
   
   if (p.value == TRUE){
-    annotation <- with(plotdata$stats, paste("AUC=",signif(auc, 2), " (P=", signif(p.value, 2), ")", sep=""))
+    annotation <- with(plotdata$stats, paste("AUC=",signif(auc, 3), " (P=", signif(p.value, 2), ")", sep=""))
   } else {
-    annotation <- with(plotdata$stats, paste("AUC=",signif(auc, 2), " (95%CI ", signif(ci.upper, 2), " - ", signif(ci.lower, 2), ")", sep=""))
+    annotation <- with(plotdata$stats, paste("AUC=",signif(auc, 3), " (95%CI ", signif(ci.upper, 2), " - ", signif(ci.lower, 2), ")", sep=""))
   }
   
   mod_level = plotdata$stats$.id[order(-plotdata$stats$auc)]
