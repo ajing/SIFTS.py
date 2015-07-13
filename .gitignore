@@ -60,3 +60,6 @@ docs/_build/
 # PyBuilder
 target/
 .Rproj.user
+
+# Data file
+*.RData
