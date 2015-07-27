@@ -5,6 +5,7 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
+from Bio.SeqUtils import seq3
 
 UNIPROT_ID = "uniprot_protein.txt"
 
@@ -79,7 +80,7 @@ def PrintMutationPair(ccd_pair):
             if orig_aa == "*":
                 continue
             for each_mutate in mutate_aa:
-                content = [uid, idx, nu3, orig_aa, each_mutate]
+                content = [uid, idx, nu3, seq3(orig_aa).upper(), seq3(each_mutate).upper()]
                 line = "\t".join(map(str, content))
                 fileobj.write(line + "\n")
             idx = idx + 1
