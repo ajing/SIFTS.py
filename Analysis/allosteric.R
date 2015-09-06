@@ -1,29 +1,23 @@
 # allosteric
 allo_annotate_org <- read.table("./Data/SNPOnStruct_biolip.txt", sep = "\t", header = F, quote = "", na.string = "\\N")
 
-<<<<<<< HEAD
+
 colnames(allo_annotate)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_biounit", "bs_p_chainid", "bs_p_resnum", "ligandName", "allo_pubmedId", "allo_pubmedTitle", "allo_organism", "allo_bsid", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "uniprot_resnam_3d", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
-=======
 colnames(allo_annotate_org)<-c("pdbid", "biounit", "ModelID", "chainid", "resnam", "resnum", "structcode", "ssa", "rsa", "UniProtID", "uniprot_resnam", "uniprot_resnum", "bs_chainid", "bs_resnum", "ligandName", "PubMedID", "PubMedTitle", "Organism", "BSID", "genename", "SwissProt_AC", "FTID", "AABefore", "prot_resnum", "AAAfter", "VarType", "dbSNPID", "DiseaseName", "uniprot_resnam_3d", "AABeforeProp", "AAAfterProp", "proteinname", "reviewed", "gene_name_acc", "interproname_acc")
 
 library(sqldf)
 allo_annotate = sqldf("select *, max(ssa) as ssa_m from allo_annotate_org group by UniProtID, uniprot_resnum, dbSNPID")
->>>>>>> d4408a32e0c41ef84d2725db219051bc0ef4ee17
 
 allo_annotate$location = "Core"
 
 #MAX_ACC["GLY"] = 84.0
-<<<<<<< HEAD
 allo_annotate$location[allo_annotate$ssa > 5] = "Surface"
 
 allo_annotate[ which(allo_annotate$distance <= 4.0), 'location'] = "Binding Site"
 
 allo_annotate[ which(!is.na(allo_annotate$allo_pubmedId)), 'location'] = "Allo"
 # For allosteric site
-allo_annotate[]
-=======
 allo_annotate$location[allo_annotate$rsa > 0.05] = "Surface"
->>>>>>> d4408a32e0c41ef84d2725db219051bc0ef4ee17
 
 allo_annotate[!is.na(allo_annotate$ligandName), "location"] = "Binding Site"
 
@@ -51,8 +45,6 @@ length(unique(allo_annotate[allo_annotate$VarType == "Disease",]$UniProtID))  #2
 length(unique(allo_annotate[allo_annotate$VarType == "Polymorphism",]$UniProtID))  #34
 
 # allosteric sites or other sites
-<<<<<<< HEAD
-=======
 allo_annotate_withsnp$allosite = allo_annotate_withsnp$location
 allo_annotate_withsnp$allosite[!is.na(allo_annotate_withsnp$PubMedID)] = "Allo"
 
@@ -77,11 +69,9 @@ tmp = merge( subset( allo_site, select = c(UniProtID, uniprot_resnum, location, 
 table(tmp$location.x, tmp$location.y)
 table(allosite = tmp$allosite.x, newdata = tmp$allosite.y)
 
-
 subset(tmp, location.y == "Binding Site", select = c(location.x, location.y))
 summary(subset(tmp, location.y == "Binding Site", select = c(location.x, location.y)))
 
->>>>>>> d4408a32e0c41ef84d2725db219051bc0ef4ee17
 fish_bs <- function(p_annotate_bs, vartype, loc){
   fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$VarType == vartype, Allosite = p_annotate_bs$allosite == loc)))
   fish_result
@@ -120,14 +110,11 @@ odds ratio
 
 fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Unclassified", "Allo")
 
-<<<<<<< HEAD
-
 # comparing allosteric sites and other ligand binding sites for each protein
 each_uniprot = by(subset(allo_site, allosite %in% c("Binding Site", "Allo")), subset(allo_site, allosite %in% c("Binding Site", "Allo"))[, "UniProtID"], function(x) {fish_bs(x, "Disease", "Allo")})
 
-
 snp_num = ddply(allo_site, .(UniProtID), summarise, fish_odds = fisher.test(table(data.frame(Disease = VarType, Allosite = allosite)))$estimate, fish_pvalue = fisher.test(table(data.frame(Disease = VarType, Allosite = allosite)))$p.value)
-=======
+
 "        Fisher's Exact Test for Count Data
 
 data:  
@@ -138,4 +125,4 @@ alternative hypothesis: true odds ratio is not equal to 1
 sample estimates:
 odds ratio 
   1.690005 "
->>>>>>> d4408a32e0c41ef84d2725db219051bc0ef4ee17
+
