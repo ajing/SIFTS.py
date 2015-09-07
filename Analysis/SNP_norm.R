@@ -420,7 +420,7 @@ ggsave(filename = "tmp.pdf", height=4, width=12)
 
 ########## TYR to CYS or CYS to TYR
 # side chain size size change CYS(135) to TYR(222) and disulphide bond
-> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(DiseaseName)))) 
+'> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(DiseaseName)))) 
 [1] 56
 > with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(DiseaseName)))) 
 [1] 44
@@ -428,7 +428,7 @@ ggsave(filename = "tmp.pdf", height=4, width=12)
 > with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(proteinname)))) 
 [1] 58
 > with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(proteinname)))) 
-[1] 44
+[1] 44'
 
 
 ########## molecular weight / size of side chain
@@ -455,7 +455,7 @@ ggsave(filename = "tmp.pdf", height=4, width=12)
 
 
 ########### more analysis about size
-> with(subset(protein_annotate_onlysnp, volumn_change %in% c("large to small", "small to large")), table(aa_change))
+'> with(subset(protein_annotate_onlysnp, volumn_change %in% c("large to small", "small to large")), table(aa_change))
 aa_change
 ALA to GLU ALA to PHE ARG to CYS ARG to GLY ARG to PRO ARG to SER CYS to ARG 
 25          3        149         87         73         42         56 
@@ -468,7 +468,7 @@ PHE to GLY PHE to SER PRO to ARG PRO to GLN PRO to PHE SER to ARG SER to LYS
 SER to PHE SER to TRP SER to TYR TRP to CYS TRP to GLY TRP to SER TYR to CYS 
 52          5         19         19         13          9         88 
 TYR to GLY TYR to SER 
-1         21 
+1         21 '
 
 
 
@@ -678,7 +678,7 @@ fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Disease", "
 fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Polymorphism", "Allo")
 fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Unclassified", "Allo")
 
-> length(unique(subset(allo_site, allosite %in% c("Binding Site", "Allo"))$UniProtID))
+'> length(unique(subset(allo_site, allosite %in% c("Binding Site", "Allo"))$UniProtID))
 [1] 27
 
 102 PDBs
@@ -687,7 +687,8 @@ fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Unclassifie
 [1] 964
 
 
-> with(allo_site, table(factor(proteinname)))                                                                                                                                                                    
+> with(allo_site, table(factor(proteinname)))  '
+                                                                                                                                                                  
 "
 Androgen receptor                                                                                                                                   
 304                                                                                                                                   

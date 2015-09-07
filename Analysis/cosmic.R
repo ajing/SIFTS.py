@@ -112,5 +112,93 @@ freq_plot <- function(protein_annotate_withsnp) {
 }
 freq_plot(protein_annotate_cancer_t)
 
+freq_plot(protein_annotate_cancer_t)
+
+######################## Allosteric on Cancer #####################################
+allo_mix_cancer = sqldf("select allo_mix.*, protein_annotate_withcancer_u.VarType as cancer_var from allo_mix left join protein_annotate_withcancer_u")
+fish_bs <- function(p_annotate_bs, vartype, loc){
+  fish_result = fisher.test(table(data.frame(Disease = p_annotate_bs$cancer_var == vartype, Allosite = p_annotate_bs$allosite == loc)))
+  fish_result
+}
+fish_bs(subset(allo_mix_cancer, allosite %in% c("Binding Site", "Allo")), "Cancer", "Allo")
 
 
+
+
+############### aa change odds ratio #########
+# turn out to be not right.
+aa_change_preference <- function(p_annotate_bs, interested_par){
+  aa_change <- factor(unique(p_annotate_bs[,interested_par]))
+  vartypes   = c("Cancer")
+  ratio_amino <- data.frame(merge(aa_change, vartypes, all = TRUE))
+  colnames(ratio_amino) <- c(interested_par, "vartypes")
+  for (vartype in vartypes) {
+    for (each in aa_change){
+      each = as.character(each)
+      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
+                         deal_with_na(as.character(p_annotate_bs[,interested_par]) == each))
+      print(c(vartype, each))
+      print(table_res)
+      table_res <- apply(table_res, 1:2, as.numeric)
+      rownames(table_res) <- c(paste("Not", vartype), vartype)
+      colnames(table_res) <- c(paste("Not", each), each)
+      
+      print(table_res)
+      
+      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs[,interested_par] == each), Disease = p_annotate_bs$VarType == vartype)))
+      
+      if (fish_result$estimate == 0) next
+      
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
+      ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
+    }
+  }
+  ratio_amino
+}
+
+protein_annotate_cancer_t[is.na(protein_annotate_cancer_t$VarType), "VarType"] = "Not Cancer"
+
+ratio_amino <- aa_change_preference(protein_annotate_cancer_t, "uniprot_resnam_3d.before")
+
+# for only protein surface, 
+ratio_amino <- aa_change_preference(subset(protein_annotate_cancer_t, location == "Binding Site"), "uniprot_resnam_3d.before")
+ratio_amino <- aa_change_preference(subset(protein_annotate_cancer_t, location == "Surface"), "uniprot_resnam_3d.before")
+
+
+############################Plot odds ratio######################################
+plot_ratio <- function(ratio_amino){
+  prop = names(ratio_amino)[1]
+  valid_var = unique(ratio_amino$vartypes)[1]
+  ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+  ratio_amino[, prop] <- factor(ratio_amino[, prop], levels = as.character(subset(ratio_amino_sort, vartypes == valid_var)[, prop]))
+  
+  print(ratio_amino)
+  ggplot(subset(ratio_amino, vartypes %in% c("Cancer", "Not Cancer")), aes_string(x = prop, y = 'estimate', ymin = 'ci_low', ymax = 'ci_up')) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
+  ggsave(filename = "tmp.pdf", height=4, width=12)  
+}
+plot_ratio(subset(ratio_amino, !(uniprot_resnam_3d.before %in% c("SEC"))))
+
+
+
+########################AA change after mutation##############################
+idx <- with(protein_annotate_cancer_t, !is.na(uniprot_resnam_3d.before) & !is.na(uniprot_resnam_3d.after))
+protein_annotate_cancer_change = protein_annotate_cancer_t
+protein_annotate_cancer_change$aa_change <- NULL
+protein_annotate_cancer_change[idx, "aa_change"] <- paste(protein_annotate_cancer_t[idx, 'uniprot_resnam_3d.before'], "to", protein_annotate_cancer_change[idx, 'uniprot_resnam_3d.after'])
+ratio_amino <- aa_change_preference(protein_annotate_cancer_change, "aa_change")
+
+
+############################Plot odds ratio######################################
+plot_ratio <- function(ratio_amino){
+  ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
+  ratio_amino$aa_change <- factor(ratio_amino$aa_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Cancer")$aa_change))
+  ratio_amino <- subset(ratio_amino, pvalue < 0.05 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Cancer", "Polymorphism"))
+  common_change <- intersect(subset(ratio_amino, vartypes == "Cancer")$aa_change, subset(ratio_amino, vartypes == "Cancer")$aa_change)
+  ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
+  
+  ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
+  ggsave(filename = "tmp.pdf", height=4, width=12)
+}
+plot_ratio(ratio_amino)
