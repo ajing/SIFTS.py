@@ -8,6 +8,7 @@ from NACCESS import NACCESS
 
 BIODIR = "2013_biounits_noligand"
 #BIODIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/test"
+BIODIR = "../../ligandNet/2013_biounits_noligand"
 OUTDIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/out_naccess"
 NACCESS_DIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/naccess2.1.1/naccess"
 TMP_DIR = "/home/ajing/Documents/Research/SIFTS.py/PDBInfo/tmp"
