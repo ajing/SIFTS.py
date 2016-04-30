@@ -75,6 +75,7 @@ get_stat_eachtype <- function(p_annotate, snp_type){
   print("O/E")
   print(loc_table/exp_table)
 }
+get_stat_eachtype(protein_annotate_withsnp, "Disease")
 
 ggplot(protein_annotate, aes(x=ssa)) +
   geom_histogram() + facet_grid(.~location)

@@ -4,6 +4,8 @@
 #### For cosmic
 #################################################
 cosmic <- read.table("/users/ajing/SNPDist/Data/CosmicCompleteExport.tsv", sep = "\t", header = T, quote = "", na.string = "")
+load("RData/cancer_u.RData")
+
 
 # Mutation in coding region
 library("stringr")
@@ -22,7 +24,7 @@ cosmic_missense$Mutation.AA.After <- factor(cosmic_missense$Mutation.AA.After)
 library("sqldf")
 protein_annotate_cancer <- sqldf(c("create index idx on cosmic_missense (`Gene.name`, `Mutation.AA.resnum`)", "select * from protein_annotate left join cosmic_missense on `Gene.name` = protein_annotate.gene_name_acc and `Mutation.AA.resnum` = protein_annotate.resnum"))
 protein_annotate_cancer$VarType = NA
-protein_annotate_cancer[!is.na(protein_annotate_cancer$Mutation.AA.Before), "VarType"] = "Cancer"
+protein_annotate_cancer[!is.na(protein_annotate_cancer$Mutation.AA.Before) & protein_annotate_cancer$FATHMM.prediction = "CANCER", "VarType"] = "Cancer"
 
 table(protein_annotate_cancer$VarType, protein_annotate_cancer$location)
 
@@ -113,4 +115,51 @@ freq_plot <- function(protein_annotate_withsnp) {
 freq_plot(protein_annotate_cancer_t)
 
 
+
+allo_mix_cancer = sqldf("select allo_annotate.*, protein_annotate_withcancer_u.VarType as cancer_var from allo_annotate  left join protein_annotate_withcancer_u on allo_annotate.UniProtID = protein_annotate_withcancer_u.UniProtID and allo_annotate.uniprot_resnum = protein_annotate_withcancer_u.uniprot_resnum")
+allo_mix_cancer_withsnp = subset(allo_mix_cancer, UniProtID %in% factor(unique(subset(allo_mix_cancer, !is.na(cancer_var))$UniProtID)))
+allo_mix_cancer_withsnp$allosite = allo_mix_cancer_withsnp$location
+allo_mix_cancer_withsnp$allosite[!is.na(allo_mix_cancer_withsnp$PubMedID)] = "Allo"
+
+allo_mix_cancer_withsnp[is.na(allo_mix_cancer_withsnp$cancer_var),"cancer_var"] = "Not Cancer"
+
+
+# binding site disease
+unique(subset(protein_annotate_withsnp, location == "Binding Site")[,"DiseaseName"])  #182
+# protein core disease
+unique(subset(protein_annotate_withsnp, location == "Core")[,"DiseaseName"])  # 208
+
+intersect(unique(subset(protein_annotate_withsnp, location == "Binding Site")[,"DiseaseName"]),unique(subset(protein_annotate_withsnp, location == "Core")[,"DiseaseName"]))   #115
+
+
+
+
+#########
+## 2/26/2016 change the definision of cancer SNPs, use FATHMM CANCER annotation
+#########
+library(data.table)
+protein_annotate_withcancer_t <- data.table(protein_annotate_withcancer_u)
+protein_annotate_withcancer_t[, VarType := "Passenger"] 
+protein_annotate_withcancer_t[FATHMM.prediction == "CANCER", VarType := "Cancer"]
+
+protein_annotate_withcancer_t[, table(VarType)]
+get_stat_eachtype(protein_annotate_withcancer_t, "Cancer")
+get_stat_eachtype(protein_annotate_withcancer_t, "Passenger")
+
+
+
+# test the result by removing proteins with large number of mutations.
+protein_annotate_withcancer_t <- data.table(protein_annotate_withcancer_u)
+protein_annotate_withcancer_t[!is.na(Mutation.AA.Before), VarType := "Cancer"] 
+num_snp_cancer <- protein_annotate_withcancer_t[!is.na(VarType), .N, by = UniProtID]
+
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>45, UniProtID])], "Cancer")
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>50, UniProtID])], "Cancer")
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>55, UniProtID])], "Cancer")
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>60, UniProtID])], "Cancer")
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>65, UniProtID])], "Cancer")
+odds_table(protein_annotate_withcancer_t[!(UniProtID %in% num_snp_cancer[N>70, UniProtID])], "Cancer")
+
+
+odds_table(protein_annotate_withcancer_t, "Cancer")
 
