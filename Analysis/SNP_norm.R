@@ -29,8 +29,8 @@ length(unique(protein_annotate_withsnp$UniProtID))
 
 > table(protein_annotate_withsnp$location)
 
-Binding Site         Core      Surface 
-17010        49292       154993 
+Binding Site         Core      Surface
+17010        49292       154993
 
 > length(unique(protein_annotate[protein_annotate$VarType == "Unclassified",]$UniProtID))
 [1] 150
@@ -169,7 +169,7 @@ aa_preference <- function(p_annotate_bs){
       table_res <- apply(table_res, 1:2, as.numeric)
       rownames(table_res) <- c(paste("Not", vartype), vartype)
       colnames(table_res) <- c(paste("Not", each), each)
-      
+
       fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$VarType == vartype)))
       print(fish_result)
       print(ratio_amino$amino_names == each & ratio_amino$vartypes == vartype)
@@ -200,7 +200,7 @@ ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-mean)),]
 ratio_amino$amino_names <- factor(ratio_amino$amino_names, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$amino_names))
 
 ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = amino_names, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
-ggsave(filename = "tmp.pdf", height=3, width=12) 
+ggsave(filename = "tmp.pdf", height=3, width=12)
 
 
 
@@ -221,7 +221,7 @@ aa_loc_preference <- function(p_annotate_bs){
       print(table_res)
       rownames(table_res) <- c(paste("Not", loc), loc)
       colnames(table_res) <- c(paste("Not", each), each)
-      
+
       fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$resnam == each), Disease = p_annotate_bs$location == loc)))
       print(fish_result)
       print(ratio_amino$amino_names == each & ratio_amino$location == loc)
@@ -238,7 +238,7 @@ ratio_amino <- aa_loc_preference(subset(protein_annotate_withsnp, location %in% 
 ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
 ratio_amino$amino_names <- factor(ratio_amino$amino_names, levels = as.character(subset(ratio_amino_sort, location == "Binding Site")$amino_names))
 ggplot(ratio_amino, aes(x = amino_names, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(color = I("blue"))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
-ggsave(filename = "tmp.pdf", height=3, width=12) 
+ggsave(filename = "tmp.pdf", height=3, width=12)
 
 
 # how many disease covered
@@ -247,8 +247,8 @@ ggsave(filename = "tmp.pdf", height=3, width=12)
 
 
 # pearson correlation coefficient
-cor(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson") 
-cor.test(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson") 
+cor(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson")
+cor.test(subset(ratio_amino, vartypes == "Disease")$mean, subset(ratio_amino, vartypes == "Polymorphism")$mean, method="pearson")
 
 
 # plots odds ratio with error bar
@@ -267,10 +267,10 @@ freq_aa = subset(freq_aa, VarType %in% c("Disease","Polymorphism", "All_Residues
 freq_aa_sort <- freq_aa[with(freq_aa, order(Frequency)),]
 freq_aa$AAType <- factor(freq_aa$AAType, levels = as.character(subset(freq_aa_sort, VarType == "Disease")$AAType))
 
-p = ggplot(freq_aa, aes(x = AAType, fill = VarType)) + 
-  geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
+p = ggplot(freq_aa, aes(x = AAType, fill = VarType)) +
+  geom_bar(aes(y = Frequency),stat="identity", position="dodge") +
   scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
-ggsave(filename = "freq_aa.pdf", height=3, width=12) 
+ggsave(filename = "freq_aa.pdf", height=3, width=12)
 
 # freq plot for location
 freq_loc <- melt(prop.table(table(protein_annotate_withsnp$uniprot_resnam_3d, protein_annotate_withsnp$location), margin = 2))
@@ -279,21 +279,21 @@ freq_loc = subset(freq_loc, !(AAType %in% c("UNK","SEC","NA")), drop = T)
 freq_loc_sort <- freq_aa[with(freq_loc, order(Frequency)),]
 freq_loc$AAType <- factor(freq_loc$AAType, levels = as.character(subset(freq_loc_sort, VarType == "Disease")$AAType))
 
-p = ggplot(freq_loc, aes(x = AAType, fill = Location)) + 
-  geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
+p = ggplot(freq_loc, aes(x = AAType, fill = Location)) +
+  geom_bar(aes(y = Frequency),stat="identity", position="dodge") +
   scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
-ggsave(filename = "freq_loc.pdf", height=3, width=12) 
+ggsave(filename = "freq_loc.pdf", height=3, width=12)
 
 
-p = ggplot(subset(protein_annotate, VarType == "Disease" & !(uniprot_resnam_3d %in% c("UNK","SEC")), drop = T), aes(x = uniprot_resnam_3d)) + 
+p = ggplot(subset(protein_annotate, VarType == "Disease" & !(uniprot_resnam_3d %in% c("UNK","SEC")), drop = T), aes(x = uniprot_resnam_3d)) +
   geom_bar(aes(y = (..count..))) + xlab("") + ylab("Frequency")
-ggsave(filename = "freq_aa.pdf", height=9, width=12) 
+ggsave(filename = "freq_aa.pdf", height=9, width=12)
 
 # http://stackoverflow.com/questions/13386177/how-to-create-odds-ratio-and-95-ci-plot-in-r
 # http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_%28ggplot2%29/
 # http://stackoverflow.com/questions/14069629/plotting-confidence-intervals
 ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = amino_names, y = mean, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
-ggsave(filename = "tmp.pdf", height=9, width=12) 
+ggsave(filename = "tmp.pdf", height=9, width=12)
 
 # Also odds ratio for each type of amino acids
 # for disease and polymorphism seperately
@@ -342,7 +342,7 @@ aa_prop_preference <- function(p_annotate_bs){
       table_res <- apply(table_res, 1:2, as.numeric)
       rownames(table_res) <- c(paste("Not", vartype), vartype)
       colnames(table_res) <- c(paste("Not", each), each)
-      
+
       fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$h_prop_change == each), Disease = p_annotate_bs$VarType == vartype)))
       print(fish_result)
       print(ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype)
@@ -363,7 +363,7 @@ ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
 ratio_amino$h_prop_change <- factor(ratio_amino$h_prop_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$h_prop_change))
 
 ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = h_prop_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=8, angle=30))
-ggsave(filename = "tmp.pdf", height=4, width=12) 
+ggsave(filename = "tmp.pdf", height=4, width=12)
 
 
 # continue analysis the hydrophibicity
@@ -389,7 +389,7 @@ aa_change_preference <- function(p_annotate_bs, interested_par){
       table_res <- apply(table_res, 1:2, as.numeric)
       rownames(table_res) <- c(paste("Not", vartype), vartype)
       colnames(table_res) <- c(paste("Not", each), each)
-      
+
       fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs[,interested_par] == each), Disease = p_annotate_bs$VarType == vartype)))
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
@@ -409,7 +409,7 @@ common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change,
 ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
 
 ggplot(ratio_amino, aes(x = aa_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text(size=8, angle=30))
-ggsave(filename = "tmp.pdf", height=4, width=12) 
+ggsave(filename = "tmp.pdf", height=4, width=12)
 
 
 
@@ -421,14 +421,14 @@ ggsave(filename = "tmp.pdf", height=4, width=12)
 
 ########## TYR to CYS or CYS to TYR
 # side chain size size change CYS(135) to TYR(222) and disulphide bond
-> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(DiseaseName)))) 
+> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(DiseaseName))))
 [1] 56
-> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(DiseaseName)))) 
+> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(DiseaseName))))
 [1] 44
 
-> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(proteinname)))) 
+> with(subset(protein_annotate_onlysnp, aa_change=="TYR to CYS"), length(table(factor(proteinname))))
 [1] 58
-> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(proteinname)))) 
+> with(subset(protein_annotate_onlysnp, aa_change=="CYS to TYR"), length(table(factor(proteinname))))
 [1] 44
 
 
@@ -452,27 +452,23 @@ ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
 ratio_amino$volumn_change <- factor(ratio_amino$volumn_change, levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")$volumn_change))
 
 ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes(x = volumn_change, y = estimate, ymin = ci_low, ymax = ci_up)) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10() + theme(axis.text.x = element_text( size=10))
-ggsave(filename = "tmp.pdf", height=4, width=12) 
+ggsave(filename = "tmp.pdf", height=4, width=12)
 
 
 ########### more analysis about size
 > with(subset(protein_annotate_onlysnp, volumn_change %in% c("large to small", "small to large")), table(aa_change))
-aa_change
-ALA to GLU ALA to PHE ARG to CYS ARG to GLY ARG to PRO ARG to SER CYS to ARG 
-25          3        149         87         73         42         56 
-CYS to PHE CYS to TRP CYS to TYR GLN to PRO GLU to ALA GLU to GLY GLU to PRO 
-30         19         75         19         32         50          1 
-GLY to ARG GLY to GLU GLY to LYS GLY to PHE GLY to TRP LYS to GLY PHE to CYS 
-186         82          1          1         14          1         28 
-PHE to GLY PHE to SER PRO to ARG PRO to GLN PRO to PHE SER to ARG SER to LYS 
-1         51         54          9          5         46          1 
-SER to PHE SER to TRP SER to TYR TRP to CYS TRP to GLY TRP to SER TYR to CYS 
-52          5         19         19         13          9         88 
-TYR to GLY TYR to SER 
-1         21 
-
-
-
+ALA to GLU ALA to PHE ARG to CYS ARG to GLY ARG to PRO ARG to SER CYS to ARG
+25          3        149         87         73         42         56
+CYS to PHE CYS to TRP CYS to TYR GLN to PRO GLU to ALA GLU to GLY GLU to PRO
+30         19         75         19         32         50          1
+GLY to ARG GLY to GLU GLY to LYS GLY to PHE GLY to TRP LYS to GLY PHE to CYS
+186         82          1          1         14          1         28
+PHE to GLY PHE to SER PRO to ARG PRO to GLN PRO to PHE SER to ARG SER to LYS
+1         51         54          9          5         46          1
+SER to PHE SER to TRP SER to TYR TRP to CYS TRP to GLY TRP to SER TYR to CYS
+52          5         19         19         13          9         88
+TYR to GLY TYR to SER
+1         21
 
 ################################## Blosum62 analysis##############################
 library(seqinr)
@@ -493,7 +489,7 @@ no_antigen_table = with(subset(protein_annotate_withsnp, !grepl("*histocompatibi
 
 ########################## Linear Model
 # the size of side chain sc_volumn
-# the hydrophobic porperty, 
+# the hydrophobic porperty,
 hydro_index <- data.frame(AAName = c("PHE", "ILE", "TRP", "LEU", "VAL", "MET", "TYR", "CYS", "ALA", "THR", "HIS", "GLY", "SER", "GLN", "ARG", "LYS", "ASN", "GLU", "PRO", "ASP"), index_num = c( 100, 99, 97, 97, 76, 74, 63, 49, 41, 13, 8, 0, -5, -10, -14, -23, -28, -31, -46, -55))
 protein_annotate_onlysnp$hydro_change <- apply(protein_annotate_onlysnp, 1, function(x) { hydro_index[hydro_index$AAName == x[["AABefore"]], "index_num"] - hydro_index[hydro_index$AAName == x[["AAAfter"]], "index_num"]})
 protein_annotate_onlysnp$size_change <- apply(protein_annotate_onlysnp, 1, function(x) { sc_volumn[sc_volumn$AAName == x[["AABefore"]], "volumn"] - sc_volumn[sc_volumn$AAName == x[["AAAfter"]], "volumn"]})
@@ -617,7 +613,7 @@ poligand$ligcount.mean = apply(poligand, 1, function(x){mean(subset(poligand, Va
 poligand$total_res = apply(poligand, 1, function(x){length(subset(poligand, VarType==x[["VarType"]])$ligcount)})
 
 
-ggplot(poligand, aes(x = ligcount, color = VarType)) + scale_x_log10() + geom_density() + geom_vline(aes(xintercept=ligcount.mean),linetype="dashed", size=1, color = "red") 
+ggplot(poligand, aes(x = ligcount, color = VarType)) + scale_x_log10() + geom_density() + geom_vline(aes(xintercept=ligcount.mean),linetype="dashed", size=1, color = "red")
 ggsave(filename = "tmp.pdf")
 
 
@@ -687,63 +683,62 @@ fish_bs(subset(allo_site, allosite %in% c("Binding Site", "Allo")), "Unclassifie
 > sum(!is.na(subset(allo_site,select = VarType)))
 [1] 964
 
-
-> with(allo_site, table(factor(proteinname)))                                                                                                                                                                    
+> with(allo_site, table(factor(proteinname)))
 "
-Androgen receptor                                                                                                                                   
-304                                                                                                                                   
-Antithrombin-III                                                                                                                                   
-436                                                                                                                                   
-Coagulation factor IX                                                                                                                                   
-307                                                                                                                                   
-Cyclin-dependent kinase 2                                                                                                                                   
-298                                                                                                                                   
-Cytosolic purine 5'-nucleotidase                                                                                                                                   
-470                                                                                                                                   
-Dihydrofolate reductase                                                                                                                                   
-186                                                                                                                                   
-Dual specificity mitogen-activated protein kinase kinase 1                                                                                                                                   
-316                                                                                                                                   
-Farnesyl pyrophosphate synthase                                                                                                                                   
-346                                                                                                                                   
-Fructose-1,6-bisphosphatase 1                                                                                                                                   
-319                                                                                                                                   
-Glucokinase                                                                                                                                   
-461                                                                                                                                   
-Glutaminase kidney isoform, mitochondrial                                                                                                                                   
-412                                                                                                                                   
-Glycogen phosphorylase, liver form                                                                                                                                   
-834                                                                                                                                   
-Glycogen phosphorylase, muscle form                                                                                                                                   
-821                                                                                                                                   
-Hemoglobin subunit alpha                                                                                                                                   
-191                                                                                                                                   
-Hemoglobin subunit beta                                                                                                                                   
-273                                                                                                                                   
-Hexokinase-1                                                                                                                                   
-903                                                                                                                                   
-Integrin alpha-L                                                                                                                                   
-184                                                                                                                                   
-Kinesin-like protein KIF11                                                                                                                                   
-351                                                                                                                                   
-Leukotriene A-4 hydrolase                                                                                                                                   
-610                                                                                                                                   
-Mitogen-activated protein kinase 14                                                                                                                                   
-359                                                                                                                                   
-NAD-dependent malic enzyme, mitochondrial                                                                                                                                   
-554                                                                                                                                   
-Ribose-phosphate pyrophosphokinase 1                                                                                                                                   
-309                                                                                                                                   
-Serine/threonine-protein kinase Chk1                                                                                                                                   
-279                                                                                                                                   
-Transthyretin                                                                                                                                   
-156                                                                                                                                   
-Vitamin D3 receptor                                                                                                                                   
-255                                                                                                                                   
-[Pyruvate dehydrogenase (acetyl-transferring)] kinase isozyme 2, mitochondrial                                                                                                                                   
-374                                                                                                                                   
-cAMP and cAMP-inhibited cGMP 3',5'-cyclic phosphodiesterase 10A                                                                                                                                   
-505 
+Androgen receptor
+304
+Antithrombin-III
+436
+Coagulation factor IX
+307
+Cyclin-dependent kinase 2
+298
+Cytosolic purine 5'-nucleotidase
+470
+Dihydrofolate reductase
+186
+Dual specificity mitogen-activated protein kinase kinase 1
+316
+Farnesyl pyrophosphate synthase
+346
+Fructose-1,6-bisphosphatase 1
+319
+Glucokinase
+461
+Glutaminase kidney isoform, mitochondrial
+412
+Glycogen phosphorylase, liver form
+834
+Glycogen phosphorylase, muscle form
+821
+Hemoglobin subunit alpha
+191
+Hemoglobin subunit beta
+273
+Hexokinase-1
+903
+Integrin alpha-L
+184
+Kinesin-like protein KIF11
+351
+Leukotriene A-4 hydrolase
+610
+Mitogen-activated protein kinase 14
+359
+NAD-dependent malic enzyme, mitochondrial
+554
+Ribose-phosphate pyrophosphokinase 1
+309
+Serine/threonine-protein kinase Chk1
+279
+Transthyretin
+156
+Vitamin D3 receptor
+255
+[Pyruvate dehydrogenase (acetyl-transferring)] kinase isozyme 2, mitochondrial
+374
+cAMP and cAMP-inhibited cGMP 3',5'-cyclic phosphodiesterase 10A
+505
 "
 
 [1] "HIS to ALA"
@@ -759,48 +754,48 @@ aa_change_preference <- function(p_annotate_bs, interested_par){
   print(ratio_amino)
   for (vartype in vartypes) {
     for (each in aa_change){
-      
+
       cannot_proc <- F
-      
+
       oddsratio_fun <- function(d, i) {
         or <- fisher.test(table(data.frame(residueName = (d[i,interested_par] == each), Disease = d[i, "VarType"] == vartype)))$estimate[[1]]
         or
       }
-      
+
       oddsboot <- tryCatch({
         boot(p_annotate_bs, oddsratio_fun, R = 1000, parallel = "multicore")
-        
+
       }, error = function(err) { cannot_proc <<- T })
-      
+
       oddsci   <- tryCatch({
         boot.ci(oddsboot, type = "norm")
       }, error = function(err) { cannot_proc <<- T })
-      
+
       if (cannot_proc) {
         next
       }
-      
+
       print(oddsci)
-      
+
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"estimate"] = oddsci$t0
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_low"] = oddsci$normal[2]
       ratio_amino[ratio_amino[,interested_par] == each & ratio_amino$vartypes == vartype,"ci_up"] = oddsci$normal[3]
     }
   }
-  
+
   print(ratio_amino)
   # plot the graph
   ratio_amino_sort <- ratio_amino[with(ratio_amino, order(-estimate)),]
   ratio_amino[, interested_par] <- factor(ratio_amino[, interested_par], levels = as.character(subset(ratio_amino_sort, vartypes == "Disease")[, interested_par]))
-  
+
   # for aa_change
   ratio_amino <- subset(ratio_amino, (ci_low - 1) * (ci_up - 1) > 0 & estimate > 0 & is.finite(estimate) & vartypes %in% c("Disease", "Polymorphism"))
   common_change <- intersect(subset(ratio_amino, vartypes == "Disease")$aa_change, subset(ratio_amino, vartypes == "Polymorphism")$aa_change)
   ratio_amino <- subset(ratio_amino, aa_change %in% common_change)
-  
-  ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes_string(x = interested_par, y = "estimate", ymin = "ci_low", ymax = "ci_up")) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()  
+
+  ggplot(subset(ratio_amino, vartypes %in% c("Disease", "Polymorphism")), aes_string(x = interested_par, y = "estimate", ymin = "ci_low", ymax = "ci_up")) + geom_pointrange(aes(col = vartypes), position=position_dodge(width=0.30))  + ylab("Odds ratio & 95% CI") + geom_hline(aes(yintercept = 1)) + xlab("") + scale_y_log10()
   ggsave(filename = "tmp.pdf", height=3, width=12)
-  
+
   ratio_amino
 }
 ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "uniprot_resnam_3d")
@@ -808,4 +803,10 @@ ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "uniprot_resnam_3d
 ratio_amino <- aa_change_preference(subset(protein_annotate_onlysnp, location %in% c("Binding Site", "Surface")), "uniprot_resnam_3d")
 
 ratio_amino <- aa_change_preference(protein_annotate_onlysnp, "aa_change")
+
+
+
+
+################### Glycine to others and others to Glycine  ###################
+
 
