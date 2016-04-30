@@ -26,9 +26,24 @@ protein_annotate_cancer[!is.na(protein_annotate_cancer$Mutation.AA.Before), "Var
 
 table(protein_annotate_cancer$VarType, protein_annotate_cancer$location)
 
+# more columns for cancer mutations
+require(dplyr)
+tmp = protein_annotate_withsnp %>% select(uniprot_resnam, uniprot_resnam_3d) %>% distinct  # translate from 1digit amino acide code to 3 digit.
+
+protein_annotate_withcancer = subset(protein_annotate_cancer, UniProtID %in% factor(unique(subset(protein_annotate_cancer, !is.na(VarType))$UniProtID)))
+
+# take unique SNP
+library(sqldf)
+protein_annotate_withcancer_u = sqldf("select * from protein_annotate_withcancer group by UniProtID, uniprot_resnum, `Mutation.ID`, `Primary.histology`")
+
+protein_annotate_cancer_t = merge(protein_annotate_withcancer_u, tmp, by.x = "Mutation.AA.After", by.y = "uniprot_resnam", suffixes = c(".before",".after"), all.x = T)
+
+
 # The first table
 get_stat_eachtype <- function(p_annotate, snp_type){
-  allres_table <- table(p_annotate$location)
+  require(dplyr)
+  tmp = p_annotate %>% select(UniProtID, uniprot_resnum, location) %>% distinct
+  allres_table <- table(tmp$location)
   loc_table = table(subset(p_annotate, VarType == snp_type)$location)
   print("Observed")
   print(loc_table)
@@ -39,11 +54,13 @@ get_stat_eachtype <- function(p_annotate, snp_type){
   print("O/E")
   print(loc_table/exp_table)
 }
-get_stat_eachtype(protein_annotate_cancer, "Cancer")
+get_stat_eachtype(protein_annotate_withcancer, "Cancer")
+
+get_stat_eachtype(protein_annotate_withcancer_u, "Cancer")
 
 
-library("epitools")
 odds_ratio_stat <- function(p_annotate, vartype){
+  require("epitools")
   table_res <- table(deal_with_na(p_annotate$VarType == vartype), deal_with_na(p_annotate$location == "Core"))
   table_res <- apply(table_res, 1:2, as.numeric)
   rownames(table_res) <- c(paste("Not", vartype), vartype)
@@ -66,35 +83,34 @@ odds_ratio_stat <- function(p_annotate, vartype){
 }
 
 # Cancer
-odds_ratio_stat(protein_annotate_cancer, "Cancer")
+odds_ratio_stat(protein_annotate_withcancer, "Cancer")
 
-# odds ratio between hydrophobic property
-aa_prop_preference <- function(p_annotate_bs){
-  prop_change <- factor(unique(p_annotate_bs$h_prop_change))
-  vartypes   = c("Cancer")
-  ratio_amino <- data.frame(merge(prop_change, vartypes, all = TRUE))
-  colnames(ratio_amino) <- c("h_prop_change", "vartypes")
-  for (vartype in vartypes) {
-    for (each in prop_change){
-      print(each)
-      print(vartype)
-      each = as.character(each)
-      table_res <- table(deal_with_na(p_annotate_bs$VarType == vartype),
-                         deal_with_na(as.character(p_annotate_bs$h_prop_change) == each))
-      table_res <- apply(table_res, 1:2, as.numeric)
-      rownames(table_res) <- c(paste("Not", vartype), vartype)
-      colnames(table_res) <- c(paste("Not", each), each)
-      
-      fish_result = fisher.test(table(data.frame(residueName = (p_annotate_bs$h_prop_change == each), Disease = p_annotate_bs$VarType == vartype)))
-      print(fish_result)
-      print(ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype)
-      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"estimate"] = fish_result$estimate
-      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_low"] = fish_result$conf.int[1]
-      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"ci_up"] = fish_result$conf.int[2]
-      ratio_amino[ratio_amino$h_prop_change == each & ratio_amino$vartypes == vartype,"pvalue"] = fish_result$p.value
-    }
-  }
-  ratio_amino
+odds_ratio_stat(protein_annotate_withcancer_u, "Cancer")
+
+
+# frequency distribution
+freq_plot <- function(protein_annotate_withsnp) {
+  require(ggplot2)
+  require(reshape2)
+  require(scales)
+  require(dplyr)
+  tmp = protein_annotate_withsnp %>% select(UniProtID, uniprot_resnum, uniprot_resnam_3d.before) %>% distinct
+  allres_table <- table(tmp$uniprot_resnam_3d.before)
+  
+  freq_aa = melt(cbind(prop.table(table(protein_annotate_withsnp$uniprot_resnam_3d.before, protein_annotate_withsnp$VarType), margin = 2),All_Residues = prop.table(allres_table)))
+  colnames(freq_aa) <-  c("AAType", "VarType", "Frequency")
+  freq_aa = subset(freq_aa, VarType %in% c("Cancer", "All_Residues") & !(AAType %in% c("UNK","SEC")), drop = T)
+  freq_aa_sort <- freq_aa[with(freq_aa, order(Frequency)),]
+  print(freq_aa_sort)
+  freq_aa$AAType <- factor(freq_aa$AAType, levels = as.character(subset(freq_aa_sort, VarType == "Cancer")$AAType))
+  print(freq_aa)
+  
+  p = ggplot(freq_aa, aes(x = AAType, fill = VarType)) + 
+    geom_bar(aes(y = Frequency),stat="identity", position="dodge") + 
+    scale_y_continuous(labels  = percent) + xlab("") + ylab("Frequency")
+  ggsave(filename = "freq_aa_cosmic.pdf", height=3, width=12) 
 }
-# why protein_annotate_onlysnp, odds ratio for only changes
-ratio_amino <- aa_prop_preference(protein_annotate_cancer)
+freq_plot(protein_annotate_cancer_t)
+
+
+

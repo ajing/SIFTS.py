@@ -62,7 +62,9 @@ esnum")]))
 
 # The first table
 get_stat_eachtype <- function(p_annotate, snp_type){
-  allres_table <- table(p_annotate$location)
+  require(dplyr)
+  tmp = p_annotate %>% select(UniProtID, uniprot_resnum, location) %>% distinct
+  allres_table <- table(tmp$location)
   loc_table = table(subset(p_annotate, VarType == snp_type)$location)
   print("Observed")
   print(loc_table)
